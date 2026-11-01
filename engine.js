@@ -11,18 +11,19 @@ const RugbyQuestions = {
   getRand(mode = "blitz") {
     let deck = [];
 
-    if (mode === "custom") {
-      const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
-      
-      // 1. Try URL parameter or global variable
-      const urlParams = new URLSearchParams(window.location.search);
-      let selectedDeckName = window.activeCustomDeckName || urlParams.get("custom");
+    // 📁 Check localStorage first if mode is custom OR if custom lists exist and a custom deck was requested
+    const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCustom = urlParams.get("custom") || window.activeCustomDeckName;
 
-      // 2. If name is URL decoded or missing, check if it exists directly in localStorage keys
+    if (mode === "custom" || (urlCustom && allLists[urlCustom])) {
+      let selectedDeckName = urlCustom;
+
+      // Fallback to the first available custom list if name doesn't match
       if (!selectedDeckName || !allLists[selectedDeckName]) {
         const keys = Object.keys(allLists);
         if (keys.length > 0) {
-          selectedDeckName = keys[0]; // Default to the first available custom list
+          selectedDeckName = keys[0];
         }
       }
 
@@ -30,22 +31,21 @@ const RugbyQuestions = {
         deck = allLists[selectedDeckName];
       }
 
-      // Fallback if no questions are found in any list
-      if (!deck || deck.length === 0) {
-        deck = [{ id: "fallback_custom", text: "Will a custom event occur in the next 3 minutes?", timer: 180 }];
+      console.log(`📁 Active Custom Deck ("${selectedDeckName}") Loaded with ${deck.length} questions.`);
+    } 
+    
+    if (!deck || deck.length === 0) {
+      if (mode === "tactical") {
+        deck = RugbyTacticalQuestions;
+      } else if (mode === "mix") {
+        deck = [...RugbyBlitzQuestions, ...RugbyTacticalQuestions];
+      } else {
+        deck = RugbyBlitzQuestions;
       }
-    } else if (mode === "blitz") {
-      deck = RugbyBlitzQuestions;
-    } else if (mode === "tactical") {
-      deck = RugbyTacticalQuestions;
-    } else if (mode === "mix") {
-      deck = [...RugbyBlitzQuestions, ...RugbyTacticalQuestions];
-    } else {
-      deck = RugbyBlitzQuestions;
     }
 
     if (!deck || deck.length === 0) {
-      return { id: "fallback", text: "Will a lineout be awarded in the next 3 minutes?", timer: 180 };
+      return { id: "fallback", text: "Will a custom event occur in the next 3 minutes?", timer: 180 };
     }
 
     let available = deck;
@@ -847,7 +847,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  window.updateActiveCard = updateActiveCard;
+    window.updateActiveCard = updateActiveCard;
 
   // ============================
   // POST QUESTION COUNTDOWN
