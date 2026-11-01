@@ -24,9 +24,8 @@
     </div>
 
     <div class="standby-notice">
-  ⚡ <strong>Keep Screen Awake:</strong> Please keep your device active during play. Locking your screen or entering sleep mode will disconnect you from the live game.
-</div>
-
+      ⚡ <strong>Keep Screen Awake:</strong> Please keep your device active during play. Locking your screen or entering sleep mode will disconnect you from the live game.
+    </div>
 
     <button id="player-join-btn">Join Game</button>
   </div>
@@ -40,8 +39,12 @@
     <div style="display: flex; flex-direction: column; gap: 10px; margin: 16px 0; font-size: 0.95rem;">
       <div><strong>Sport:</strong> <span id="preview-sport">--</span></div>
       <div><strong>Questions:</strong> <span id="preview-questions">--</span></div>
-      <div><strong>Card Timer:</strong> <span id="preview-timer">--</span></div>
+      <div><strong>Game Mode:</strong> <span id="preview-timer">--</span></div>
       <div><strong>Starting Balance:</strong> <span id="preview-balance" style="color: #22c55e; font-weight: 700;">--</span></div>
+    </div>
+
+    <div class="standby-notice">
+      ⚡ <strong>Keep Screen Awake:</strong> Please keep your device active during play. Locking your screen or entering sleep mode will disconnect you from the live game.
     </div>
 
     <div id="previewCreditError" class="error-text" style="display: none; color: #ef4444; font-size: 0.85rem; margin-bottom: 12px; font-weight: 600;">
@@ -94,6 +97,18 @@
       <div class="choices">
         <button class="btn btn-yes" id="btn-yes">YES</button>
         <button class="btn btn-no" id="btn-no">NO</button>
+      </div>
+
+      <!-- 🔑 LIVE PREDICTION POPULARITY PERCENTAGE BAR (Reveals when stake window closes) -->
+      <div id="popularityContainer" class="popularity-container" style="display: none;">
+        <div class="popularity-labels">
+          <span id="labelYesPct">YES: 50%</span>
+          <span id="labelNoPct">NO: 50%</span>
+        </div>
+        <div class="popularity-bar">
+          <div class="popularity-yes" id="barYes" style="width: 50%;"></div>
+          <div class="popularity-no" id="barNo" style="width: 50%;"></div>
+        </div>
       </div>
 
       <div class="cashout-row">
