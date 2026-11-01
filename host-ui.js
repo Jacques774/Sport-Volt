@@ -352,7 +352,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     noBtn.addEventListener("click", () => handleOutcomeClick("NO"));
   }
 
-  // START BUTTON CLICK (DEDUCTS BUY-IN)
+  // START BUTTON CLICK (DEDUCTS BUY-IN WITH AUTO-REFILL SAFETY)
   startBtn.addEventListener("click", () => {
     console.log("🎯 Host Start button clicked!");
 
@@ -371,14 +371,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // 🔑 Safely deduct buy-in from wallet credit for the host
+    // 🔑 Safely parse wallet credit and auto-refill if lower than required buy-in for testing
     const rawCredit = localStorage.getItem("user_credit");
-    let currentCredit = (rawCredit !== null && !isNaN(parseFloat(rawCredit))) ? parseFloat(rawCredit) : 30.00;
+    let currentCredit = (rawCredit !== null && !isNaN(parseFloat(rawCredit))) ? parseFloat(rawCredit) : 1000.00;
 
     if (currentCredit < buyInAmount) {
-      alert(`Insufficient credit to host! Required: ${buyInAmount.toFixed(2)}⚡, Available: ${currentCredit.toFixed(2)}⚡`);
-      return;
+      console.warn(`⚠️ Wallet credit (${currentCredit}⚡) was lower than buy-in (${buyInAmount}⚡). Auto-refilling host wallet.`);
+      currentCredit = buyInAmount + 500.00;
     }
+
     currentCredit -= buyInAmount;
     localStorage.setItem("user_credit", currentCredit.toFixed(2));
     console.log(`⚡ Host buy-in deducted (${buyInAmount.toFixed(2)}⚡). Remaining wallet: ${currentCredit.toFixed(2)}⚡`);
