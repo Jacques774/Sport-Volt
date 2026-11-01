@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sport Volt - Deck Manager</title>
+  <style>
+    :root {
+      --bg-dark: #070d17;
+      --card-bg: #0b1526;
+      --input-bg: #050b14;
+      --border-color: #1e2d4a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #00d2ff;
+      --yes-green: #22c55e;
+      --yes-green-dark: #052e16;
+      --no-red: #ef4444;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .builder-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .builder-header h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 4px;
+    }
+
+    .builder-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* STEP 1: MENU CARDS */
+    .menu-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .menu-card-btn {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
+    }
+
+    .menu-card-btn:hover {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .menu-card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .menu-card-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .menu-card-arrow {
+      font-size: 1.2rem;
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+
+    /* STEP CONTAINERS */
+    .step-view {
+      display: none;
+    }
+    .step-view.active {
+      display: block;
+    }
+
+    /* FORM STYLES */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .field-group label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .field-group input,
+    .field-group select {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.25s ease;
+      width: 100%;
+    }
+
+    .field-group input:focus,
+    .field-group select:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: var(--accent-blue);
+      color: var(--input-bg);
+      font-size: 0.92rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+      transition: all 0.25s ease;
+      margin-top: 6px;
+    }
+
+    .btn-action:hover {
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.65);
+    }
+
+    .btn-add-q {
+      background: var(--yes-green);
+      color: var(--yes-green-dark);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+    }
+
+    .btn-add-q:hover {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.65);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+      color: var(--text-main);
+    }
+
+    /* QUESTIONS LIST */
+    .questions-box {
+      margin-top: 16px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 14px;
+    }
+
+    .questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 10px;
+      padding-right: 4px;
+    }
+
+    .q-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .btn-remove-q {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: var(--no-red);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .btn-remove-q:hover {
+      background: var(--no-red);
+      color: white;
+    }
+
+    .toast-msg {
+      color: var(--yes-green);
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.82rem;
+      display: none;
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+
+    /* CUSTOM YES/NO CONFIRMATION MODAL */
+    #customConfirmModal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(7, 13, 23, 0.85);
+      backdrop-filter: blur(4px);
+      border-radius: var(--radius-lg);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .confirm-modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    }
+
+    .confirm-modal-text {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .confirm-modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-confirm-yes {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: var(--no-red);
+      color: white;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-confirm-no {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .btn-confirm-no:hover {
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  
+  <div class="builder-header">
+    <h2 id="headerTitle">Deck Manager</h2>
+    <p id="headerSub">Create or edit your custom question lists</p>
+  </div>
+
+  <!-- STEP 1: INITIAL MENU -->
+  <div id="step-menu" class="step-view active">
+    <div class="menu-cards">
+      <button class="menu-card-btn" onclick="startNewList()">
+        <div>
+          <span class="menu-card-title">➕ Create New List</span>
+          <span class="menu-card-sub">Start a brand new empty question deck</span>
+        </div>
+        <span class="menu-card-arrow">→</span>
+      </button>
+
+      <button class="menu-card-btn" onclick="startEditList()">
+        <div>
+          <span class="menu-card-title">✏️ Edit Existing List</span>
+          <span class="menu-card-sub">Add or delete questions in an existing list</span>
+        </div>
+        <span class="menu-card-arrow">→</span>
+      </button>
+    </div>
+
+    <button onclick="window.location.href='gamesetup.html'" class="btn-secondary" style="margin-top: 20px;">Back to Setup</button>
+  </div>
+
+  <!-- STEP 2A: CREATE LIST NAME -->
+  <div id="step-create-name" class="step-view">
+    <div class="field-group">
+      <label for="newListName">List / Folder Name</label>
+      <input type="text" id="newListName" placeholder="e.g. Six Nations Derby">
+    </div>
+
+    <button onclick="confirmCreateList()" class="btn-action">Continue to Add Questions →</button>
+    <button onclick="goToMenu()" class="btn-secondary">Cancel</button>
+  </div>
+
+  <!-- STEP 2B: SELECT LIST TO EDIT -->
+  <div id="step-select-edit" class="step-view">
+    <div class="field-group">
+      <label for="selectListEdit">Select List</label>
+      <select id="selectListEdit">
+        <!-- Populated dynamically -->
+      </select>
+    </div>
+
+    <button onclick="confirmSelectEdit()" class="btn-action">Open List Workspace →</button>
+    <button onclick="goToMenu()" class="btn-secondary">Cancel</button>
+  </div>
+
+  <!-- STEP 3: WORKSPACE (ADD / REMOVE QUESTIONS) -->
+  <div id="step-workspace" class="step-view">
+    <div style="background: rgba(0, 210, 255, 0.08); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Active List</span>
+        <div id="activeListNameDisplay" style="font-size: 0.95rem; font-weight: 800; color: var(--accent-blue);">--</div>
+      </div>
+      <button onclick="promptDeleteActiveList()" style="background: transparent; border: none; color: var(--no-red); font-size: 0.75rem; font-weight: 700; cursor: pointer;">Delete List</button>
+    </div>
+
+    <div class="field-group">
+      <label for="qText">Question Text</label>
+      <input type="text" id="qText" placeholder="e.g. Will a try be scored in the next 5 mins?">
+    </div>
+
+    <div class="field-group">
+      <label for="qTimer">Timer Duration (Seconds)</label>
+      <input type="number" id="qTimer" value="180" min="30" max="600">
+    </div>
+
+    <button onclick="addQuestionToActiveList()" class="btn-action btn-add-q">+ Add Question to List</button>
+    <div id="addToast" class="toast-msg">Question Added! 🎉</div>
+
+    <div class="questions-box">
+      <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Questions in List</label>
+      <div id="questionsContainer" class="questions-list">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <button onclick="goToMenu()" class="btn-secondary" style="margin-top: 16px;">Save & Done</button>
+  </div>
+
+  <!-- CUSTOM YES/NO MODAL OVERLAY -->
+  <div id="customConfirmModal">
+    <div class="confirm-modal-content">
+      <div id="confirmModalText" class="confirm-modal-text">Are you sure?</div>
+      <div class="confirm-modal-actions">
+        <button id="modalBtnYes" class="btn-confirm-yes">Yes</button>
+        <button id="modalBtnNo" class="btn-confirm-no" onclick="closeConfirmModal()">No</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentActiveListName = "";
+
+  function getLists() {
+    return JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
+  }
+
+  function saveLists(lists) {
+    localStorage.setItem("custom_question_lists", JSON.stringify(lists));
+  }
+
+  function showStep(stepId) {
+    document.querySelectorAll('.step-view').forEach(el => el.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+  }
+
+  function goToMenu() {
+    document.getElementById("headerTitle").textContent = "Deck Manager";
+    document.getElementById("headerSub").textContent = "Create or edit your custom question lists";
+    showStep("step-menu");
+  }
+
+  // CUSTOM MODAL CONTROLS
+  function openConfirmModal(message, onYesCallback) {
+    document.getElementById("confirmModalText").textContent = message;
+    const modal = document.getElementById("customConfirmModal");
+    modal.style.display = "flex";
+
+    const yesBtn = document.getElementById("modalBtnYes");
+    yesBtn.onclick = () => {
+      closeConfirmModal();
+      if (typeof onYesCallback === "function") onYesCallback();
+    };
+  }
+
+  function closeConfirmModal() {
+    document.getElementById("customConfirmModal").style.display = "none";
+  }
+
+  // STEP 1 CHOICE
+  function startNewList() {
+    document.getElementById("newListName").value = "";
+    document.getElementById("headerTitle").textContent = "Name Your List";
+    document.getElementById("headerSub").textContent = "Give your question deck a distinct title";
+    showStep("step-create-name");
+  }
+
+  function startEditList() {
+    const lists = getLists();
+    const keys = Object.keys(lists);
+    const select = document.getElementById("selectListEdit");
+    select.innerHTML = "";
+
+    if (keys.length === 0) {
+      alert("No custom lists exist yet. Create one first!");
+      return;
+    }
+
+    keys.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = `${name} (${lists[name].length} questions)`;
+      select.appendChild(opt);
+    });
+
+    document.getElementById("headerTitle").textContent = "Select List";
+    document.getElementById("headerSub").textContent = "Choose a list to edit";
+    showStep("step-select-edit");
+  }
+
+  // STEP 2 CONFIRMS
+  function confirmCreateList() {
+    const name = document.getElementById("newListName").value.trim();
+    if (!name) return alert("Please enter a list name.");
+
+    const lists = getLists();
+    if (!lists[name]) {
+      lists[name] = [];
+      saveLists(lists);
+    }
+
+    currentActiveListName = name;
+    openWorkspace();
+  }
+
+  function confirmSelectEdit() {
+    const name = document.getElementById("selectListEdit").value;
+    if (!name) return;
+
+    currentActiveListName = name;
+    openWorkspace();
+  }
+
+  // WORKSPACE (STEP 3)
+  function openWorkspace() {
+    document.getElementById("headerTitle").textContent = "Question Workspace";
+    document.getElementById("headerSub").textContent = "Add or remove questions for this list";
+    document.getElementById("activeListNameDisplay").textContent = currentActiveListName;
+    renderQuestions();
+    showStep("step-workspace");
+  }
+
+  function renderQuestions() {
+    const lists = getLists();
+    const container = document.getElementById("questionsContainer");
+    container.innerHTML = "";
+
+    const questions = lists[currentActiveListName] || [];
+    if (questions.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 10px;">No questions added yet.</p>`;
+      return;
+    }
+
+    questions.forEach((q, idx) => {
+      const div = document.createElement("div");
+      div.className = "q-item";
+      div.innerHTML = `
+        <div>
+          <strong style="color: var(--text-main);">${q.text}</strong>
+          <div style="color: var(--accent-blue); font-size: 0.75rem;">Timer: ${q.timer}s</div>
+        </div>
+        <button class="btn-remove-q" onclick="promptRemoveQuestion(${idx})">Remove</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function addQuestionToActiveList() {
+    const text = document.getElementById("qText").value.trim();
+    const timer = Number(document.getElementById("qTimer").value) || 180;
+
+    if (!text) return alert("Please enter question text.");
+
+    const lists = getLists();
+    if (!lists[currentActiveListName]) lists[currentActiveListName] = [];
+
+    lists[currentActiveListName].push({ id: "custom_" + Date.now(), text, timer });
+    saveLists(lists);
+
+    document.getElementById("qText").value = "";
+    renderQuestions();
+
+    const toast = document.getElementById("addToast");
+    toast.style.display = "block";
+    setTimeout(() => toast.style.display = "none", 2000);
+  }
+
+  function promptRemoveQuestion(idx) {
+    openConfirmModal("Are you sure you want to remove this question?", () => {
+      const lists = getLists();
+      if (lists[currentActiveListName]) {
+        lists[currentActiveListName].splice(idx, 1);
+        saveLists(lists);
+        renderQuestions();
+      }
+    });
+  }
+
+  function promptDeleteActiveList() {
+    openConfirmModal(`Are you sure you want to delete the entire list "${currentActiveListName}"?`, () => {
+      const lists = getLists();
+      delete lists[currentActiveListName];
+      saveLists(lists);
+      goToMenu();
+    });
+  }
+</script>
+
+</body>
+</html>
