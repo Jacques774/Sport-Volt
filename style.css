@@ -911,3 +911,50 @@ body:not(.stake-active) #potAmount {
   text-align: center;
 }
 
+/* ============================
+   NARROWER CASHOUT BUTTON & SINGLE-LINE TIMER
+   ============================ */
+.cashout-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* Restricts width so it isn't full screen */
+.cashout-btn {
+  max-width: 175px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 30px;
+  border: 1px solid var(--accent-blue);
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: transparent;
+  color: var(--text-main);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+  transition: all 0.3s ease;
+  
+  /* 🔑 Forces everything inside the button to stay on one line */
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; 
+}
+
+/* Keeps the internal text and timer inline */
+#cashout-btn {
+  white-space: nowrap;
+}
+
+.cashout-timer {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+
