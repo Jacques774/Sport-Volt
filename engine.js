@@ -250,6 +250,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // 🔑 Hide popularity bar on new question start
+      const popContainer = document.getElementById("popularityContainer");
+      if (popContainer) popContainer.style.display = "none";
+
       // 🔑 Fetch question from new system if not provided by socket payload
       if (!q || !q.text) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -709,6 +713,64 @@ document.addEventListener("DOMContentLoaded", () => {
     if (stakeEl) {
       stakeEl.style.display = "inline";
       stakeEl.textContent = `Stake window: ${timeLeft}s`;
+    }
+  };
+
+  // ============================
+  // REVEAL POT & CALCULATE POPULARITY BAR PERCENTAGES
+  // ============================
+  window.revealPot = function (amount) {
+    window.isStakeWindowActive = false;
+    document.body.classList.remove("stake-active");
+
+    const countdownEl = document.getElementById("stakeCountdown");
+    const potEl = document.getElementById("potAmount");
+
+    if (countdownEl) countdownEl.style.display = "none";
+    if (potEl) {
+      potEl.style.removeProperty("display");
+      potEl.style.display = "inline";
+      potEl.textContent = "Pot: " + Number(amount || 0).toFixed(2) + "⚡";
+    }
+
+    // 🔑 Reveal and calculate Yes vs No popularity percentages
+    const popContainer = document.getElementById("popularityContainer");
+    if (popContainer) {
+      popContainer.style.display = "block";
+
+      const stakes = window.pot?.stakes || {};
+      let totalYes = 0;
+      let totalNo = 0;
+
+      if (window.pot && window.pot.playerChoices) {
+        for (const [pName, choice] of Object.entries(window.pot.playerChoices)) {
+          const stakeAmount = stakes[pName] || 0;
+          if (choice === "YES") totalYes += stakeAmount;
+          if (choice === "NO") totalNo += stakeAmount;
+        }
+      } else {
+        totalYes = 1;
+        totalNo = 1;
+      }
+
+      const totalStaked = totalYes + totalNo;
+      let yesPct = 50;
+      let noPct = 50;
+
+      if (totalStaked > 0) {
+        yesPct = Math.round((totalYes / totalStaked) * 100);
+        noPct = 100 - yesPct;
+      }
+
+      const labelYes = document.getElementById("labelYesPct");
+      const labelNo = document.getElementById("labelNoPct");
+      if (labelYes) labelYes.textContent = `YES: ${yesPct}%`;
+      if (labelNo) labelNo.textContent = `NO: ${noPct}%`;
+
+      const barYes = document.getElementById("barYes");
+      const barNo = document.getElementById("barNo");
+      if (barYes) barYes.style.width = `${yesPct}%`;
+      if (barNo) barNo.style.width = `${noPct}%`;
     }
   };
 
