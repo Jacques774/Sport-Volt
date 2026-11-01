@@ -11,7 +11,20 @@ const RugbyQuestions = {
   getRand(mode = "blitz") {
     let deck = [];
 
-    if (mode === "blitz") {
+    if (mode === "custom") {
+      // 📁 Pull custom lists from localStorage
+      const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
+      
+      // Try to get the specific custom deck selected during game setup, or fallback to the first available list
+      const selectedDeckName = window.activeCustomDeckName || Object.keys(allLists)[0];
+      
+      if (selectedDeckName && allLists[selectedDeckName]) {
+        deck = allLists[selectedDeckName];
+      } else {
+        // Fallback if no custom questions exist in storage
+        deck = [{ id: "fallback_custom", text: "Will a custom event occur in the next 3 minutes?", timer: 180 }];
+      }
+    } else if (mode === "blitz") {
       deck = RugbyBlitzQuestions;
     } else if (mode === "tactical") {
       deck = RugbyTacticalQuestions;
@@ -80,6 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let questionCountdown = null;
   let cashoutCountdown = null;
+
+  // 📁 Capture custom deck name from URL parameters if passed by host
+  const urlParams = new URLSearchParams(window.location.search);
+  window.activeCustomDeckName = urlParams.get("custom") || null;
 
   const qText = document.getElementById("q-text");
   const qInfo = document.getElementById("q-info");
