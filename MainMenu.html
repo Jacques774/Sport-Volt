@@ -13,6 +13,7 @@
       --text-muted: #94a3b8;       /* Muted grey for labels */
       --accent-blue: #00d2ff;      /* Electric cyan glow accent */
       --border-color: #1e293b;     /* Dark subtle borders */
+      --yes-green: #22c55e;        /* Green accent */
     }
 
     body {
@@ -37,12 +38,32 @@
       font-size: 0.85rem;
       font-weight: bold;
       cursor: pointer;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       transition: all 0.3s ease;
     }
     .temp-add-btn:hover {
       background: rgba(0, 210, 255, 0.1);
       box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+    }
+
+    /* 📁 Temp Manage Questions Button Style */
+    .temp-manager-btn {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--yes-green);
+      border: 1px dashed var(--yes-green);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 16px;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    .temp-manager-btn:hover {
+      background: rgba(34, 197, 94, 0.2);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
     }
 
     /* Temp Credit Box - Styled like your Wix product cards */
@@ -104,6 +125,9 @@
   </style>
 </head>
 <body>
+
+  <!-- 📁 Temporary Link to Create/Manage Questions Screen -->
+  <a href="/create-question.html" class="temp-manager-btn">📁 Manage Custom Decks (Temp)</a>
 
   <!-- 🔑 Temp Add 5 Volts Credit Button -->
   <button id="add-credit-btn" class="temp-add-btn">+ Add 5 ⚡ Credit (Temp)</button>
