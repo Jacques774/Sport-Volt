@@ -38,6 +38,17 @@ const RugbyQuestions = {
   }
 };
 
+// 🔑 TIMER FORMATTER: Converts total seconds into "Xm Ys" format (e.g. 90 -> "1m 30s")
+function formatTime(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  
+  if (mins > 0) {
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  }
+  return `${secs}s`;
+}
+
 // ✅ Dynamic Pot initializer supporting host buy-in amount & instant leaderboard sync
 window.initGame = function (players, buyInAmount = 100) {
   window.pot = new Pot(players, buyInAmount);
@@ -291,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (qInfo) {
             qInfo.innerHTML = `You chose: ${this.currentQuestion.userChoice || "--"}<br>
               Stake: ${this.currentQuestion.stake ? this.currentQuestion.stake.toFixed(2) : 0}⚡<br>
-              Timer: ${timeLeft}s`;
+              Timer: ${formatTime(timeLeft)}`;
           }
         },
         () => {
@@ -666,7 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
         qInfo.innerHTML = `
           You chose: --<br>
           Stake: --<br>
-          Timer: ${Engine.currentQuestion?.timer || "--"}s
+          Timer: ${formatTime(Engine.currentQuestion?.timer || 60)}
         `;
       }
 
@@ -714,7 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
       qInfo.innerHTML = `
         You chose: ${q.userChoice || "--"}<br>
         Stake: ${safeStake.toFixed(2)}⚡<br>
-        Timer: ${q.timer || "--"}s
+        Timer: ${formatTime(q.timer || 60)}
       `;
     }
   }
@@ -770,7 +781,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.startCashoutTimer = function (duration) {
     let timeLeft = duration || Math.floor((Engine.currentQuestion?.timer || 60) / 2);
 
-    if (cashoutTimerEl) cashoutTimerEl.textContent = `${timeLeft}s`;
+    if (cashoutTimerEl) cashoutTimerEl.textContent = formatTime(timeLeft);
 
     if (window.cashoutCountdown) {
       clearInterval(window.cashoutCountdown);
@@ -778,7 +789,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.cashoutCountdown = setInterval(() => {
       timeLeft--;
-      if (cashoutTimerEl) cashoutTimerEl.textContent = `${timeLeft}s`;
+      if (cashoutTimerEl) cashoutTimerEl.textContent = formatTime(timeLeft);
       if (timeLeft <= 0) {
         clearInterval(window.cashoutCountdown);
         if (cashoutBtn) cashoutBtn.disabled = true;
