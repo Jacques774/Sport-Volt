@@ -898,3 +898,16 @@ body:not(.stake-active) #potAmount {
 #confirm-join-btn:active {
   transform: translateY(0);
 }
+
+.standby-notice {
+  margin: 14px 0;
+  padding: 10px 14px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  color: #ffca28;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
