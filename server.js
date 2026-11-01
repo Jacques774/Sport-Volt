@@ -171,24 +171,25 @@ io.on("connection", (socket) => {
     if (!games[gameId]) return;
     const player = Object.values(games[gameId].players).find(p => p.name === playerName);
     if (player) {
-      player.choice = choice;
+      player.choice = choice; // 🔑 Track YES/NO choice for popularity bar calculations
       console.log(`📡 Prediction recorded for ${playerName}: ${choice}`);
     }
     io.to(gameId).emit("prediction_made", { player: playerName, choice });
   });
 
   // Handle stake_placed
-  socket.on("stake_placed", ({ gameId, playerName, amount }) => {
+  socket.on("stake_placed", ({ gameId, playerName, amount, choice }) => {
     if (!games[gameId]) return;
     const player = Object.values(games[gameId].players).find(p => p.name === playerName);
     if (player) {
       player.stake = amount;
       player.balance -= amount;
+      if (choice) player.choice = choice;
 
       games[gameId].potBalance = (games[gameId].potBalance || 0) + amount;
       const newPot = games[gameId].potBalance;
 
-      io.to(gameId).emit("remote_stake_placed", { playerName, amount });
+      io.to(gameId).emit("remote_stake_placed", { playerName, amount, choice: player.choice });
       io.to(gameId).emit("pot_update", { amount: newPot });
     }
   });
