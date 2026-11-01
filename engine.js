@@ -543,11 +543,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // MULTIPLAYER SOCKET SYNC
   // ============================
   if (window.socket) {
-    window.socket.on("remote_stake_placed", ({ playerName, amount }) => {
+    window.socket.on("remote_stake_placed", ({ playerName, amount, choice }) => {
       const activePlayer = getActivePlayerName();
       if (window.pot && playerName !== activePlayer) {
         window.pot.stakes[playerName] = (window.pot.stakes[playerName] || 0) + amount;
         window.pot.potBalance += amount;
+        if (choice) {
+          if (!window.pot.playerChoices) window.pot.playerChoices = {};
+          window.pot.playerChoices[playerName] = choice;
+        }
+      }
+    });
+
+    window.socket.on("prediction_made", ({ player, choice }) => {
+      if (window.pot) {
+        if (!window.pot.playerChoices) window.pot.playerChoices = {};
+        window.pot.playerChoices[player] = choice;
       }
     });
 
@@ -557,6 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const refund = amount * 0.5;
         window.pot.potBalance -= refund;
         window.pot.stakes[playerName] = 0;
+        if (window.pot.playerChoices) delete window.pot.playerChoices[playerName];
       }
     });
 
@@ -638,13 +650,16 @@ document.addEventListener("DOMContentLoaded", () => {
             window.updatePot(newPotBalance);
           }
         });
+        if (!window.pot.playerChoices) window.pot.playerChoices = {};
+        window.pot.playerChoices[player] = q.userChoice;
       }
 
       if (window.socket && player) {
         window.socket.emit("stake_placed", {
           gameId: window.gameId,
           playerName: player,
-          amount
+          amount,
+          choice: q.userChoice
         });
       }
 
@@ -717,7 +732,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // ============================
-  // REVEAL POT & CALCULATE POPULARITY BAR PERCENTAGES
+  // REVEAL POT & ROBUST PERCENTAGE CALCULATION
   // ============================
   window.revealPot = function (amount) {
     window.isStakeWindowActive = false;
@@ -733,24 +748,34 @@ document.addEventListener("DOMContentLoaded", () => {
       potEl.textContent = "Pot: " + Number(amount || 0).toFixed(2) + "⚡";
     }
 
-    // 🔑 Reveal and calculate Yes vs No popularity percentages
+    // 🔑 Reveal and calculate Yes vs No popularity percentages robustly
     const popContainer = document.getElementById("popularityContainer");
     if (popContainer) {
       popContainer.style.display = "block";
 
-      const stakes = window.pot?.stakes || {};
       let totalYes = 0;
       let totalNo = 0;
 
-      if (window.pot && window.pot.playerChoices) {
-        for (const [pName, choice] of Object.entries(window.pot.playerChoices)) {
-          const stakeAmount = stakes[pName] || 0;
-          if (choice === "YES") totalYes += stakeAmount;
-          if (choice === "NO") totalNo += stakeAmount;
+      const stakes = window.pot?.stakes || {};
+      const choices = window.pot?.playerChoices || window.pot?.choices || {};
+
+      const activeQ = Engine.currentQuestion;
+      const myName = getActivePlayerName();
+
+      if (activeQ && activeQ.userChoice && activeQ.stake > 0 && myName) {
+        if (!choices[myName]) choices[myName] = activeQ.userChoice;
+        if (!stakes[myName]) stakes[myName] = activeQ.stake;
+      }
+
+      for (const [player, choice] of Object.entries(choices)) {
+        const stakeAmt = Number(stakes[player]) || 0;
+        const normalizedChoice = String(choice).trim().toUpperCase();
+
+        if (normalizedChoice === "YES") {
+          totalYes += stakeAmt;
+        } else if (normalizedChoice === "NO") {
+          totalNo += stakeAmt;
         }
-      } else {
-        totalYes = 1;
-        totalNo = 1;
       }
 
       const totalStaked = totalYes + totalNo;
@@ -760,6 +785,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (totalStaked > 0) {
         yesPct = Math.round((totalYes / totalStaked) * 100);
         noPct = 100 - yesPct;
+      } else {
+        yesPct = 50;
+        noPct = 50;
       }
 
       const labelYes = document.getElementById("labelYesPct");
