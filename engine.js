@@ -12,16 +12,26 @@ const RugbyQuestions = {
     let deck = [];
 
     if (mode === "custom") {
-      // 📁 Pull custom lists from localStorage
       const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
       
-      // Try to get the specific custom deck selected during game setup, or fallback to the first available list
-      const selectedDeckName = window.activeCustomDeckName || Object.keys(allLists)[0];
-      
+      // 1. Try URL parameter or global variable
+      const urlParams = new URLSearchParams(window.location.search);
+      let selectedDeckName = window.activeCustomDeckName || urlParams.get("custom");
+
+      // 2. If name is URL decoded or missing, check if it exists directly in localStorage keys
+      if (!selectedDeckName || !allLists[selectedDeckName]) {
+        const keys = Object.keys(allLists);
+        if (keys.length > 0) {
+          selectedDeckName = keys[0]; // Default to the first available custom list
+        }
+      }
+
       if (selectedDeckName && allLists[selectedDeckName]) {
         deck = allLists[selectedDeckName];
-      } else {
-        // Fallback if no custom questions exist in storage
+      }
+
+      // Fallback if no questions are found in any list
+      if (!deck || deck.length === 0) {
         deck = [{ id: "fallback_custom", text: "Will a custom event occur in the next 3 minutes?", timer: 180 }];
       }
     } else if (mode === "blitz") {
