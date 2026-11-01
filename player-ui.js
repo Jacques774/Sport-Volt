@@ -146,7 +146,7 @@ function initPlayerUI() {
 
     // Default fallback values from URL query parameters
     let urlBuyin = urlParams.get("buyin") !== null ? Number(urlParams.get("buyin")) : 20;
-    let urlQtime = urlParams.get("qtime") !== null ? Number(urlParams.get("qtime")) : 120;
+    let gameMode = urlParams.get("mode") || "blitz";
     let sport = "Rugby";
     let questionCount = 40;
 
@@ -163,7 +163,7 @@ function initPlayerUI() {
             urlBuyin = Number(gameData.startingBalance);
             window.activeBuyInAmount = urlBuyin;
           }
-          if (gameData.qtime !== undefined) urlQtime = Number(gameData.qtime);
+          if (gameData.mode !== undefined) gameMode = gameData.mode;
           if (gameData.questionCount !== undefined) questionCount = Number(gameData.questionCount);
           if (gameData.sport) sport = gameData.sport.charAt(0).toUpperCase() + gameData.sport.slice(1);
         }
@@ -172,17 +172,25 @@ function initPlayerUI() {
       console.warn("Could not fetch live room details, falling back to URL parameters:", err);
     }
 
+    const formattedMode = gameMode.charAt(0).toUpperCase() + gameMode.slice(1) + " Mode";
+
     pendingGameData = {
       sport: sport,
       questionCount: questionCount,
-      cardTimer: `${Math.round(urlQtime / 60)} min(s)`,
+      gameModeDisplay: formattedMode,
       startingBalance: urlBuyin
     };
 
     // Populate Modal Elements
     document.getElementById("preview-sport").textContent = pendingGameData.sport;
     document.getElementById("preview-questions").textContent = pendingGameData.questionCount;
-    document.getElementById("preview-timer").textContent = pendingGameData.cardTimer;
+    
+    // 🔑 Display Game Mode instead of card timer on preview modal
+    const previewTimerEl = document.getElementById("preview-timer");
+    if (previewTimerEl) {
+      previewTimerEl.textContent = pendingGameData.gameModeDisplay;
+    }
+
     document.getElementById("preview-balance").textContent = `${pendingGameData.startingBalance.toFixed(2)}⚡`;
 
     // Re-read latest wallet credit safely
