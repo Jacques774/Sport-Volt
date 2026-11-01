@@ -182,7 +182,8 @@
         <option value="blitz" selected>Blitz (Fast Events: 90s - 3m)</option>
         <option value="tactical">Tactical (Macro Trends: 4m - 10m)</option>
         <option value="mix">Mix (Combined Blitz & Tactical Deck)</option>
-        <option value="custom">📁 Custom Deck (Saved Lists)</option>
+        <!-- Custom Deck Option (Dynamically shown/hidden) -->
+        <option value="custom" id="custom-mode-option" style="display: none;">📁 Custom Deck (Saved Lists)</option>
       </select>
 
       <!-- Dynamic Custom Folder Dropdown (Appears only when 'custom' is selected) -->
@@ -219,6 +220,19 @@
   </div>
 
 <script>
+  // 📁 Check if custom lists exist in storage and show/hide the dropdown option accordingly
+  function checkCustomDecksAvailability() {
+    const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
+    const customOption = document.getElementById("custom-mode-option");
+    const keys = Object.keys(allLists);
+
+    if (keys.length > 0) {
+      customOption.style.display = "block";
+    } else {
+      customOption.style.display = "none";
+    }
+  }
+
   // Populate custom folders from localStorage
   function loadCustomFoldersDropdown() {
     const select = document.getElementById("custom-folder-select");
@@ -226,11 +240,6 @@
     select.innerHTML = "";
 
     const keys = Object.keys(allLists);
-    if (keys.length === 0) {
-      select.innerHTML = `<option value="">⚠️ No custom lists found in storage.</option>`;
-      return;
-    }
-
     keys.forEach(listName => {
       const count = allLists[listName].length;
       const opt = document.createElement("option");
@@ -253,6 +262,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    // Check custom deck visibility on page load
+    checkCustomDecksAvailability();
+
     const urlParams = new URLSearchParams(window.location.search);
     const maxCredit = Number(urlParams.get("credit")) || 50;
 
