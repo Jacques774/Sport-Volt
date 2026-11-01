@@ -11,29 +11,28 @@ const RugbyQuestions = {
   getRand(mode = "blitz") {
     let deck = [];
 
-    // 📁 Check localStorage first if mode is custom OR if custom lists exist and a custom deck was requested
+    // 📁 FOOLPROOF OVERRIDE: Check for custom lists FIRST before checking regular game modes
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
     const urlParams = new URLSearchParams(window.location.search);
-    const urlCustom = urlParams.get("custom") || window.activeCustomDeckName;
+    let customDeckName = urlParams.get("custom") || window.activeCustomDeckName;
 
-    if (mode === "custom" || (urlCustom && allLists[urlCustom])) {
-      let selectedDeckName = urlCustom;
+    if (customDeckName) {
+      customDeckName = decodeURIComponent(customDeckName.replace(/\+/g, " "));
+    }
 
-      // Fallback to the first available custom list if name doesn't match
-      if (!selectedDeckName || !allLists[selectedDeckName]) {
-        const keys = Object.keys(allLists);
-        if (keys.length > 0) {
-          selectedDeckName = keys[0];
-        }
+    // If a custom deck was requested or if no explicit mode was matched, look in storage
+    if ((mode === "custom" || customDeckName) && Object.keys(allLists).length > 0) {
+      if (!customDeckName || !allLists[customDeckName]) {
+        // Fallback to the first available list if name doesn't match exactly
+        customDeckName = Object.keys(allLists)[0];
       }
 
-      if (selectedDeckName && allLists[selectedDeckName]) {
-        deck = allLists[selectedDeckName];
+      if (customDeckName && allLists[customDeckName]) {
+        deck = allLists[customDeckName];
       }
+    }
 
-      console.log(`📁 Active Custom Deck ("${selectedDeckName}") Loaded with ${deck.length} questions.`);
-    } 
-    
+    // If no custom deck was found/used, fall back to standard modes
     if (!deck || deck.length === 0) {
       if (mode === "tactical") {
         deck = RugbyTacticalQuestions;
@@ -70,7 +69,7 @@ function formatTime(totalSeconds) {
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   }
   return `${secs}s`;
-}
+};
 
 // ✅ Dynamic Pot initializer supporting host buy-in amount & instant leaderboard sync
 window.initGame = function (players, buyInAmount = 100) {
@@ -847,7 +846,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-    window.updateActiveCard = updateActiveCard;
+  window.updateActiveCard = updateActiveCard;
 
   // ============================
   // POST QUESTION COUNTDOWN
