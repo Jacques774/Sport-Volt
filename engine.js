@@ -11,27 +11,22 @@ const RugbyQuestions = {
   getRand(mode = "blitz") {
     let deck = [];
 
+    // 📁 DIRECT STORAGE CHECK: Grab all saved custom lists
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
-    const urlParams = new URLSearchParams(window.location.search);
+    const activeDeckName = localStorage.getItem("active_custom_deck");
 
-    // 📁 FOOLPROOF OVERRIDE: Check localStorage active custom deck or URL param FIRST
-    let customDeckName = localStorage.getItem("active_custom_deck") 
-      || urlParams.get("custom") 
-      || window.activeCustomDeckName;
-
-    if (customDeckName) {
-      customDeckName = decodeURIComponent(customDeckName.replace(/\+/g, " "));
+    // 🔒 ABSOLUTE LOCK: If an active custom deck is set and exists, use it 100% of the time!
+    if (activeDeckName && allLists[activeDeckName] && allLists[activeDeckName].length > 0) {
+      deck = allLists[activeDeckName];
+    } else {
+      // Fallback: If no active deck is set, check if ANY custom list exists and use the first one
+      const keys = Object.keys(allLists);
+      if (keys.length > 0 && allLists[keys[0]].length > 0) {
+        deck = allLists[keys[0]];
+      }
     }
 
-    // 🔒 ABSOLUTE PRIORITY: If a custom deck exists in storage, ALWAYS use it first!
-    if (customDeckName && allLists[customDeckName]) {
-      deck = allLists[customDeckName];
-    } else if (mode === "custom" && Object.keys(allLists).length > 0) {
-      const firstKey = Object.keys(allLists)[0];
-      deck = allLists[firstKey];
-    }
-
-    // 🏈 Fallback to standard question files ONLY if no custom deck is active
+    // 🏈 ONLY use standard rugby files if your localStorage custom lists are completely empty
     if (!deck || deck.length === 0) {
       if (mode === "tactical") {
         deck = RugbyTacticalQuestions;
@@ -101,10 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let questionCountdown = null;
   let cashoutCountdown = null;
-
-  // 📁 Capture custom deck name from URL parameters if passed by host
-  const urlParams = new URLSearchParams(window.location.search);
-  window.activeCustomDeckName = urlParams.get("custom") || null;
 
   const qText = document.getElementById("q-text");
   const qInfo = document.getElementById("q-info");
@@ -188,17 +179,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // GAME OVER MODAL HELPER (SAFE NUMERIC PARSING & GUARD)
   // ============================
   function triggerGameOverModal(leaderboard) {
-    // 🔑 Prevent duplicate execution if triggered multiple times
     if (window.hasProcessedGameOver) return;
     window.hasProcessedGameOver = true;
 
     window.isGameOver = true;
 
-    // Hide active question card immediately
     const activeCard = document.getElementById("active-card");
     if (activeCard) activeCard.style.display = "none";
 
-    // Close host outcome panel if open
     if (typeof window.closeHostOutcome === "function") {
       window.closeHostOutcome();
     }
@@ -220,11 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Determine starting buy-in baseline
     const urlParams = new URLSearchParams(window.location.search);
     const startingBuyin = urlParams.get("buyin") !== null ? Number(urlParams.get("buyin")) : 20;
 
-    // Dynamic Win / Loss / Break-Even messaging
     let positionText = "";
     if (finalBalance > startingBuyin) {
       positionText = "Congratulations! You finished in profit! 🏆🎉";
@@ -234,14 +220,12 @@ document.addEventListener("DOMContentLoaded", () => {
       positionText = "Game Over. You finished in a loss. 📉";
     }
 
-    // Populate Modal Elements
     const messageEl = document.getElementById("gameOverMessage");
     const balanceEl = document.getElementById("gameOverFinalBalance");
 
     if (messageEl) messageEl.textContent = positionText;
     if (balanceEl) balanceEl.textContent = `Final Balance: ${Number(finalBalance || 0).toFixed(2)}⚡`;
 
-    // 🔑 Safely parse current wallet and earnings as numbers before adding (prevents string concatenation)
     const rawWallet = localStorage.getItem("user_credit");
     let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 30.00;
     
@@ -249,9 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentWallet += gameEarnings;
 
     localStorage.setItem("user_credit", currentWallet.toFixed(2));
-    console.log(`⚡ Added final balance (${gameEarnings.toFixed(2)}⚡) to wallet. New total: ${currentWallet.toFixed(2)}⚡`);
 
-    // Show Modal via class toggle and fallback inline flex
     const gameOverModal = document.getElementById("gameOverModal");
     if (gameOverModal) {
       gameOverModal.classList.add("show");
@@ -267,26 +249,21 @@ document.addEventListener("DOMContentLoaded", () => {
     currentQuestion: null,
 
     nextQuestion(q) {
-      // 🛑 Stop question processing if game is complete
       if (window.isGameOver) {
-        console.log("🛑 Engine: Game is over. Blocking question initialization.");
         const activeCard = document.getElementById("active-card");
         if (activeCard) activeCard.style.display = "none";
         return;
       }
 
-      // 🔑 Hide popularity bar on new question start
       const popContainer = document.getElementById("popularityContainer");
       if (popContainer) popContainer.style.display = "none";
 
-      // 🔑 Fetch question from new system if not provided by socket payload
       if (!q || !q.text) {
         const urlParams = new URLSearchParams(window.location.search);
         const gameMode = urlParams.get("mode") || "blitz";
         q = RugbyQuestions.getRand(gameMode);
       }
 
-      // 🔑 Capture question tally tracking for final round detection
       if (q && q.current !== undefined) window.currentQuestionNum = q.current;
       if (q && q.total !== undefined) window.totalQuestionsCount = q.total;
 
@@ -297,10 +274,8 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(window.questionCountdown);
       clearInterval(window.cashoutCountdown);
 
-      // 🔑 PRIORITY 1: Respect server-provided q.timer sent via socket payload
       let finalTimer = q && Number(q.timer) >= 60 ? Number(q.timer) : NaN;
 
-      // PRIORITY 2: Fall back to URL parameter or localStorage if server timer is missing
       if (isNaN(finalTimer)) {
         const urlParams = new URLSearchParams(window.location.search);
         let parsedTime = Number(urlParams.get("qtime"));
@@ -310,7 +285,6 @@ document.addEventListener("DOMContentLoaded", () => {
         finalTimer = (!isNaN(parsedTime) && parsedTime >= 60) ? parsedTime : 60;
       }
 
-      // Capture starting balance reliably across Player and Host
       const startingBalance = getCurrentPlayerBalance();
 
       this.currentQuestion = { 
@@ -341,13 +315,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
-      // Safe stake timer restart
       if (window.stakeInterval) {
         clearInterval(window.stakeInterval);
         window.stakeInterval = null;
       }
 
-      // ✅ 10s Stake window
       if (window.pot && typeof window.pot.startStakeTimer === "function") {
         window.pot.startStakeTimer(
           10000,
@@ -360,7 +332,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const activeQ = Engine.currentQuestion;
             if (activeQ && activeQ.stake > 0 && !activeQ.cashedOut) {
               if (typeof startCashoutTimer === "function") {
-                // 🔑 Pass half of the card's timer duration to the cash-out timer
                 const dynamicCashoutTime = Math.floor((activeQ.timer || 60) / 2);
                 startCashoutTimer(dynamicCashoutTime);
               }
@@ -382,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (cashoutBtn) cashoutBtn.disabled = true;
     },
 
-    // ✅ CASHOUT (FIXED: Cash out locally, update UI/pot, and WAIT for host outcome event)
     cashout() {
       const q = this.currentQuestion;
       if (!q || q.stake <= 0) return;
@@ -434,18 +404,15 @@ document.addEventListener("DOMContentLoaded", () => {
           Stake: ${q.stake.toFixed(2)}⚡ (CASHED OUT)<br>
           <small>Waiting for host outcome...</small>`;
       }
-
-      console.log("💰 Cashout complete. Waiting for host to select outcome to sync with lobby...");
     },
 
-    // ✅ PROPORTIONAL PARIMUTUEL RESOLUTION & GAME OVER CHECK (FIXED: Always syncs lobby)
     handleOutcome(outcome, serverWinners = null) {
       if (typeof window.closeHostOutcome === "function") {
         window.closeHostOutcome();
       }
 
       const q = this.currentQuestion;
-      if (!q || q.hasBeenResolved) return; // Prevent duplicate resolution!
+      if (!q || q.hasBeenResolved) return;
       q.hasBeenResolved = true;
       q.outcome = outcome;
 
@@ -464,7 +431,6 @@ document.addEventListener("DOMContentLoaded", () => {
             winningPlayers.push(player);
           }
 
-          // Execute proportional pot distribution
           if (window.pot && typeof window.pot.resolveOutcome === "function") {
             window.pot.resolveOutcome(winningPlayers);
           }
@@ -492,7 +458,6 @@ document.addEventListener("DOMContentLoaded", () => {
           if (qInfo) qInfo.innerHTML += `<br><small>Outcome: ${outcome} (${didWin ? "WIN" : "LOST"})</small>`;
         }
 
-        // Push to History once for all participants
         if (typeof History !== "undefined" && typeof History.push === "function") {
           History.push(q);
           if (typeof History.render === "function") History.render();
@@ -505,12 +470,10 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Error during round outcome processing:", err);
       }
 
-      // Check if final question
       const currentQNum = window.currentQuestionNum || (q.current || 0);
       const totalQCount = window.totalQuestionsCount || (q.total || 0);
 
       if ((currentQNum > 0 && totalQCount > 0 && currentQNum >= totalQCount) || q.isFinalQuestion) {
-        console.log("🏁 Final question outcome processed. Triggering Game Over...");
         window.isGameOver = true;
 
         const finalLeaderboard = window.pot ? Object.keys(window.pot.balances).map(name => ({
@@ -526,8 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // 🔑 ALL CLIENTS (INCLUDING CASHED OUT) TRIGGER POST-QUESTION COUNTDOWN TOGETHER
-      console.log("⏳ Syncing lobby: Starting post-question countdown...");
       this.startNextCountdown();
     },
 
@@ -557,16 +518,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (window.isHost && window.socket) {
           window.socket.emit("next_round", { gameId: window.gameId });
-        } else {
-          console.log("⏳ Player finished countdown, waiting for server...");
         }
       });
     }
   };
 
-  // ============================
-  // MULTIPLAYER SOCKET SYNC
-  // ============================
   if (window.socket) {
     window.socket.on("remote_stake_placed", ({ playerName, amount, choice }) => {
       const activePlayer = getActivePlayerName();
@@ -601,7 +557,6 @@ document.addEventListener("DOMContentLoaded", () => {
       Engine.handleOutcome(outcome, winners);
     });
 
-    // 🔑 Handle mid-game player joins dynamically
     window.socket.on("player_joined", ({ playerName, balance }) => {
       if (window.pot && window.pot.balances) {
         window.pot.balances[playerName] = balance !== undefined ? balance : 0;
@@ -612,15 +567,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 🔑 Handle Game Over event & trigger popup modal across all clients
     window.socket.on("game_over", ({ leaderboard }) => {
       triggerGameOverModal(leaderboard);
     });
   }
 
-  // ============================
-  // BUTTON LISTENERS
-  // ============================
   if (btnYes) {
     btnYes.onclick = () => {
       Engine.choose("YES");
@@ -733,9 +684,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // ============================
-  // STAKE COUNTDOWN DISPLAY (GUARDS POT DISPLAY)
-  // ============================
   window.showCountdown = function (timeLeft) {
     window.isStakeWindowActive = true;
     document.body.classList.add("stake-active");
@@ -756,9 +704,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // ============================
-  // REVEAL POT & ROBUST PERCENTAGE CALCULATION
-  // ============================
   window.revealPot = function (amount) {
     window.isStakeWindowActive = false;
     document.body.classList.remove("stake-active");
@@ -773,7 +718,6 @@ document.addEventListener("DOMContentLoaded", () => {
       potEl.textContent = "Pot: " + Number(amount || 0).toFixed(2) + "⚡";
     }
 
-    // 🔑 Reveal and calculate Yes vs No popularity percentages robustly
     const popContainer = document.getElementById("popularityContainer");
     if (popContainer) {
       popContainer.style.display = "block";
@@ -827,9 +771,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // ============================
-  // UI HELPERS
-  // ============================
   function updateActiveCard(q) {
     const safeStake = (typeof q.stake === "number" && !isNaN(q.stake)) ? q.stake : 0;
     const qText = document.getElementById("q-text");
@@ -839,17 +780,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (qInfo) {
       qInfo.innerHTML = `
         You chose: ${q.userChoice || "--"}<br>
-        Stake: ${safeStake.toFixed(2)}⚡<br>
+        Stake: ${safeScale(safeStake)}⚡<br>
         Timer: ${formatTime(q.timer || 60)}
       `;
     }
   }
 
+  function safeScale(val) {
+    return Number(val || 0).toFixed(2);
+  }
+
   window.updateActiveCard = updateActiveCard;
 
-  // ============================
-  // POST QUESTION COUNTDOWN
-  // ============================
   window.startPostQuestionCountdown = function (onDone, duration = 3) {
     const el = document.getElementById("postQuestionCountdown");
     if (!el) {
@@ -876,9 +818,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   };
 
-  // ============================
-  // HOST OUTCOME PANEL (ONLY EMIT TO SOCKET)
-  // ============================
   window.openHostOutcome = function (questionText) {
     const panel = document.querySelector(".host-outcome-panel");
     const text = document.getElementById("host-outcome-question");
@@ -892,7 +831,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (panel) panel.classList.remove("active");
   };
 
-  // 🔑 DYNAMIC CASHOUT TIMER HELPER
   window.startCashoutTimer = function (duration) {
     let timeLeft = duration || Math.floor((Engine.currentQuestion?.timer || 60) / 2);
 
