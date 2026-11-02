@@ -353,9 +353,11 @@
 
         window.GameSession = { gameCode, sport, gameMode, customDeckName, startingBalance, questionCount };
 
-        const joinLink = `${BASE_URL}/player.html?code=${gameCode}&buyin=${startingBalance}&mode=${gameMode}`;
-        linkField.textContent = joinLink;
+        // 📁 FIXED: Append custom deck parameter to player join link so everyone loads the right questions
+        const customParam = customDeckName ? `&custom=${encodeURIComponent(customDeckName)}` : "";
+        const joinLink = `${BASE_URL}/player.html?code=${gameCode}&buyin=${startingBalance}&mode=${gameMode}${customParam}`;
         
+        linkField.textContent = joinLink;
         codeDisplay.textContent = gameCode;
 
         linkBox.style.display = "flex";
@@ -385,6 +387,14 @@
 
     startBtn.addEventListener("click", () => {
       const { gameCode, gameMode, startingBalance, customDeckName } = window.GameSession;
+      
+      // 📁 FIXED: Save active custom deck into localStorage for zero-login persistence before redirecting
+      if (customDeckName) {
+        localStorage.setItem("active_custom_deck", customDeckName);
+      } else {
+        localStorage.removeItem("active_custom_deck");
+      }
+
       const customParam = customDeckName ? `&custom=${encodeURIComponent(customDeckName)}` : "";
       window.location.href = `${BASE_URL}/host?code=${gameCode}&buyin=${startingBalance}&mode=${gameMode}${customParam}`;
     });
