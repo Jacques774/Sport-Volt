@@ -5,7 +5,7 @@ import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// ✅ Import new separate rugby question banks
+// ✅ Import separate rugby question banks for default fallbacks
 import { RugbyBlitzQuestions } from "./RugbyQuestions-blitz.js";
 import { RugbyTacticalQuestions } from "./RugbyQuestions-tactical.js";
 
@@ -32,21 +32,23 @@ app.get("/player", (req, res) => res.sendFile(path.join(__dirname, "player.html"
 // --- Game state ---
 const games = {};
 
-// 🔑 Helper to pick a random question based on game mode with non-repeating logic
-function getRandomQuestionForMode(mode, lastId) {
+// 🔑 Helper to pick a random question, supporting custom question decks or default modes
+function getRandomQuestionForMode(game, lastId) {
   let deck = [];
-  if (mode === "blitz") {
-    deck = RugbyBlitzQuestions;
-  } else if (mode === "tactical") {
+
+  // 📁 If custom mode is active and custom questions are stored on the server, use them!
+  if (game.mode === "custom" && game.customQuestions && game.customQuestions.length > 0) {
+    deck = game.customQuestions;
+  } else if (game.mode === "tactical") {
     deck = RugbyTacticalQuestions;
-  } else if (mode === "mix") {
+  } else if (game.mode === "mix") {
     deck = [...RugbyBlitzQuestions, ...RugbyTacticalQuestions];
   } else {
     deck = RugbyBlitzQuestions;
   }
 
   if (!deck || deck.length === 0) {
-    return { id: "fallback", text: "Will a lineout be awarded in the next 3 minutes?", timer: 180 };
+    return { id: "fallback", text: "Will a custom event occur in the next 3 minutes?", timer: 180 };
   }
 
   let available = deck;
@@ -58,10 +60,10 @@ function getRandomQuestionForMode(mode, lastId) {
   return available[randomIndex];
 }
 
-// ✅ Updated to receive host settings, including mode
+// ✅ Updated to receive host settings, including custom deck payload
 app.post("/api/create-game", (req, res) => {
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const { startingBalance, questionCount, mode } = req.body;
+  const { startingBalance, questionCount, mode, customDeckName, customQuestions } = req.body;
 
   const gameMode = mode || "blitz";
 
@@ -70,7 +72,9 @@ app.post("/api/create-game", (req, res) => {
     hostId: null,
     potBalance: 0, 
     started: false,
-    mode: gameMode, // 🔑 Store selected mode in server state
+    mode: gameMode,
+    customDeckName: customDeckName || null,
+    customQuestions: customQuestions || [], // 🔑 Save custom question list in server memory!
     currentQuestionId: null,
     currentQuestionIndex: 0,
     lastOutcome: null,
@@ -78,7 +82,7 @@ app.post("/api/create-game", (req, res) => {
     questionCount: Number(questionCount) || 20
   };
 
-  console.log(`🎮 Game created [${code}] with mode: ${gameMode}`);
+  console.log(`🎮 Game created [${code}] with mode: ${gameMode} (${customDeckName || 'Default'})`);
 
   res.json({ 
     code, 
@@ -88,7 +92,7 @@ app.post("/api/create-game", (req, res) => {
   });
 });
 
-// ✅ New endpoint for clients to fetch configuration by room code
+// ✅ Endpoint for clients to fetch configuration by room code
 app.get("/api/game/:code", (req, res) => {
   const code = req.params.code.toUpperCase();
   const game = games[code];
@@ -98,7 +102,8 @@ app.get("/api/game/:code", (req, res) => {
   res.json({
     startingBalance: game.startingBalance,
     questionCount: game.questionCount,
-    mode: game.mode
+    mode: game.mode,
+    customDeckName: game.customDeckName
   });
 });
 
@@ -171,7 +176,7 @@ io.on("connection", (socket) => {
     if (!games[gameId]) return;
     const player = Object.values(games[gameId].players).find(p => p.name === playerName);
     if (player) {
-      player.choice = choice; // 🔑 Track YES/NO choice for popularity bar calculations
+      player.choice = choice; 
       console.log(`📡 Prediction recorded for ${playerName}: ${choice}`);
     }
     io.to(gameId).emit("prediction_made", { player: playerName, choice });
@@ -230,12 +235,11 @@ io.on("connection", (socket) => {
       game.started = true;
       io.to(gameId).emit("game_started", { host });
 
-      // 🔑 Pull question based on game mode
-      const selectedQ = getRandomQuestionForMode(game.mode, game.currentQuestionId);
+      // 🔑 Pull question based on custom deck or game mode
+      const selectedQ = getRandomQuestionForMode(game, game.currentQuestionId);
       game.currentQuestionId = selectedQ.id;
       game.currentQuestionIndex = 1;
 
-      // ✅ Pass full question object so host/player clients receive exact text and card timer
       io.to(gameId).emit("new_question", { 
         id: selectedQ.id, 
         timer: selectedQ.timer,
@@ -308,8 +312,8 @@ io.on("connection", (socket) => {
       p.choice = null;
     });
 
-    // 🔑 Pull next random question based on game mode
-    const selectedQ = getRandomQuestionForMode(game.mode, game.currentQuestionId);
+    // 🔑 Pull next question from custom deck or game mode
+    const selectedQ = getRandomQuestionForMode(game, game.currentQuestionId);
     game.currentQuestionId = selectedQ.id;
     game.currentQuestionIndex = (game.currentQuestionIndex || 0) + 1;
     
@@ -322,7 +326,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  // 🔑 Handle Game Over event & broadcast final leaderboard
+  // Handle Game Over event
   socket.on("game_over", ({ gameId, leaderboard }) => {
     if (!games[gameId]) return;
     console.log(`🏁 Game over triggered for room [${gameId}]`);
