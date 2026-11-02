@@ -11,28 +11,27 @@ const RugbyQuestions = {
   getRand(mode = "blitz") {
     let deck = [];
 
-    // 📁 FOOLPROOF OVERRIDE: Check for custom lists FIRST before checking regular game modes
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
     const urlParams = new URLSearchParams(window.location.search);
-    let customDeckName = urlParams.get("custom") || window.activeCustomDeckName;
+
+    // 📁 FOOLPROOF OVERRIDE: Check localStorage active custom deck or URL param FIRST
+    let customDeckName = localStorage.getItem("active_custom_deck") 
+      || urlParams.get("custom") 
+      || window.activeCustomDeckName;
 
     if (customDeckName) {
       customDeckName = decodeURIComponent(customDeckName.replace(/\+/g, " "));
     }
 
-    // If a custom deck was requested or if no explicit mode was matched, look in storage
-    if ((mode === "custom" || customDeckName) && Object.keys(allLists).length > 0) {
-      if (!customDeckName || !allLists[customDeckName]) {
-        // Fallback to the first available list if name doesn't match exactly
-        customDeckName = Object.keys(allLists)[0];
-      }
-
-      if (customDeckName && allLists[customDeckName]) {
-        deck = allLists[customDeckName];
-      }
+    // 🔒 ABSOLUTE PRIORITY: If a custom deck exists in storage, ALWAYS use it first!
+    if (customDeckName && allLists[customDeckName]) {
+      deck = allLists[customDeckName];
+    } else if (mode === "custom" && Object.keys(allLists).length > 0) {
+      const firstKey = Object.keys(allLists)[0];
+      deck = allLists[firstKey];
     }
 
-    // If no custom deck was found/used, fall back to standard modes
+    // 🏈 Fallback to standard question files ONLY if no custom deck is active
     if (!deck || deck.length === 0) {
       if (mode === "tactical") {
         deck = RugbyTacticalQuestions;
@@ -69,7 +68,7 @@ function formatTime(totalSeconds) {
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   }
   return `${secs}s`;
-};
+}
 
 // ✅ Dynamic Pot initializer supporting host buy-in amount & instant leaderboard sync
 window.initGame = function (players, buyInAmount = 100) {
