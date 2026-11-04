@@ -143,7 +143,24 @@
   <a href="/player" class="menu-btn">Player</a>
 
   <script>
-    // 🔑 FIX: Explicitly check for null so 0.00⚡ isn't bypassed by short-circuit fallback
+    // 🛡️ BOUNCER CHECK: Force users to enter via your Wix landing page
+    const allowedWixDomain = "thecoachapps.wixsite.com";
+    const previousUrl = document.referrer;
+
+    const cameFromWix = previousUrl.includes(allowedWixDomain);
+    const alreadyVerified = localStorage.getItem("wixSessionUnlocked") === "true";
+
+    if (!cameFromWix && !alreadyVerified) {
+      console.log("Direct access blocked. Redirecting to Wix landing page...");
+      window.location.href = "https://thecoachapps.wixsite.com/sport-volt";
+    } else {
+      if (cameFromWix) {
+        localStorage.setItem("wixSessionUnlocked", "true");
+      }
+      console.log("Access granted to Sport Volt.");
+    }
+
+    // 🔑 Credit management logic
     const storedCredit = localStorage.getItem("user_credit");
     let userCredit = storedCredit !== null ? Number(storedCredit) : 30.00;
 
