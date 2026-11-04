@@ -28,8 +28,8 @@
       margin: 0;
     }
 
-    /* Temp Add Credit Button Style */
-    .temp-add-btn {
+    /* Top-Up Shop Link / Button Style */
+    .topup-btn {
       background: transparent;
       color: var(--accent-blue);
       border: 1px dashed var(--accent-blue);
@@ -39,9 +39,11 @@
       font-weight: bold;
       cursor: pointer;
       margin-bottom: 12px;
+      text-decoration: none;
+      display: inline-block;
       transition: all 0.3s ease;
     }
-    .temp-add-btn:hover {
+    .topup-btn:hover {
       background: rgba(0, 210, 255, 0.1);
       box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
     }
@@ -66,7 +68,7 @@
       box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
     }
 
-    /* Temp Credit Box - Styled like your Wix product cards */
+    /* Credit Box - Styled like your Wix product cards */
     .credit-box {
       background-color: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -129,13 +131,13 @@
   <!-- 📁 Temporary Link to Create/Manage Questions Screen -->
   <a href="/create-question.html" class="temp-manager-btn">📁 Manage Custom Decks (Temp)</a>
 
-  <!-- 🔑 Temp Add 5 Volts Credit Button -->
-  <button id="add-credit-btn" class="temp-add-btn">+ Add 5 ⚡ Credit (Temp)</button>
+  <!-- ⚡ Top-Up Link pointing to success page simulation -->
+  <a href="/success.html" id="topup-link" class="topup-btn">⚡ Top Up 10 Volts (£1.00)</a>
 
-  <!-- Temporary Credit Display -->
+  <!-- Credit Display -->
   <div class="credit-box">
     <div class="credit-label">Available Credit</div>
-    <div class="credit-amount" id="user-credit">30.00⚡</div>
+    <div class="credit-amount" id="user-credit">20.00⚡</div>
   </div>
 
   <h1>Main Menu</h1>
@@ -155,9 +157,9 @@
       console.log("Access granted via Wix.");
     }
 
-    // 🔑 Credit management logic
+    // 🔑 Credit management logic (Defaults to 20.00 Volts for new players)
     const storedCredit = localStorage.getItem("user_credit");
-    let userCredit = storedCredit !== null ? Number(storedCredit) : 30.00;
+    let userCredit = storedCredit !== null ? Number(storedCredit) : 20.00;
 
     // Save initial default credit if it's the user's first time visiting
     if (storedCredit === null) {
@@ -174,25 +176,6 @@
     const hostBtn = document.getElementById("host-btn");
     if (hostBtn) {
       hostBtn.href = `/gamesetup.html?credit=${userCredit.toFixed(2)}`;
-    }
-
-    // 🔑 Temp Button Event Listener to add 5 Volts
-    const addCreditBtn = document.getElementById("add-credit-btn");
-    if (addCreditBtn) {
-      addCreditBtn.addEventListener("click", () => {
-        userCredit += 5.00;
-        localStorage.setItem("user_credit", userCredit.toFixed(2));
-
-        if (creditEl) {
-          creditEl.textContent = userCredit.toFixed(2) + "⚡";
-        }
-
-        if (hostBtn) {
-          hostBtn.href = `/gamesetup.html?credit=${userCredit.toFixed(2)}`;
-        }
-
-        console.log(`⚡ Temp added 5⚡. New credit: ${userCredit.toFixed(2)}⚡`);
-      });
     }
   </script>
 </body>
