@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Purchase Successful | Sport Volt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg-primary: #050b14;       /* Deep midnight stadium background */
+      --bg-card: #0d1726;          /* Lighter navy container */
+      --text-main: #ffffff;        /* Crisp white text */
+      --text-muted: #94a3b8;       /* Muted grey for labels */
+      --accent-blue: #00d2ff;      /* Electric cyan glow accent */
+      --border-color: #1e293b;     /* Dark subtle borders */
+    }
+
+    html, body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      margin: 0;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    .success-card {
+      background-color: var(--bg-card);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6);
+    }
+
+    /* ⚡ Volt Icon Container */
+    .volt-icon {
+      font-size: 3.2rem;
+      color: var(--accent-blue);
+      margin-bottom: 10px;
+      text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+      animation: pulseGlow 2s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { text-shadow: 0 0 10px rgba(0, 210, 255, 0.3); transform: scale(1); }
+      100% { text-shadow: 0 0 25px rgba(0, 210, 255, 0.8); transform: scale(1.05); }
+    }
+
+    h1 {
+      color: var(--text-main);
+      font-size: 1.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .balance-box {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+      background: #050b14;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 25px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .home-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-radius: 30px;
+      border: none;
+      background: var(--accent-blue);
+      color: #000;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+      transition: all 0.3s;
+      box-sizing: border-box;
+    }
+
+    .home-btn:hover {
+      background: #38bdf8;
+      box-shadow: 0 0 25px rgba(0, 210, 255, 0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="success-card">
+    <div class="volt-icon">⚡</div>
+    <h1>Purchase Successful</h1>
+    <p id="success-message">Thank you for buying Volts. Your account has been credited.</p>
+    
+    <div class="balance-box" id="new-balance-display">
+      Updated Balance: Loading...
+    </div>
+
+    <!-- Routed correctly to index.html -->
+    <a href="index.html" class="home-btn">Back to Home</a>
+  </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // 🛡️ 1. WIX BOUNCER: Ensure traffic originates from Wix checkout/domain
+    const allowedWixDomain = "thecoachapps.wixsite.com";
+    const previousUrl = document.referrer;
+
+    // Uncomment the block below once live on Wix to fully enforce bouncer protection:
+    /*
+    if (!previousUrl.includes(allowedWixDomain)) {
+      console.log("Direct URL attempt blocked. Redirecting to Wix...");
+      window.location.href = "https://thecoachapps.wixsite.com/sport-volt";
+      return;
+    }
+    */
+
+    const urlParams = new URLSearchParams(window.location.search);
+    // Grab how many volts were bought from URL parameter (defaults to 10 for your £1 test)
+    const voltsPurchased = Number(urlParams.get("volts")) || 10;
+
+    // 🛡️ 2. ONE-TIME CREDIT GUARD: Prevent refresh exploits
+    const txId = `tx_${voltsPurchased}_${window.location.search}`;
+    const processedTx = sessionStorage.getItem("last_processed_tx");
+
+    // Read current user credit from localStorage safely (defaults to 20.00 for new players)
+    const rawWallet = localStorage.getItem("user_credit");
+    let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 20.00;
+
+    if (processedTx === txId) {
+      // User refreshed the page: display current balance without re-adding credits
+      document.getElementById("success-message").textContent = `Your wallet has already been credited for this purchase.`;
+    } else {
+      // First time loading page from checkout: credit the wallet
+      currentWallet += voltsPurchased;
+      localStorage.setItem("user_credit", currentWallet.toFixed(2));
+      sessionStorage.setItem("last_processed_tx", txId);
+      
+      document.getElementById("success-message").textContent = `Successfully added ${voltsPurchased}⚡ to your balance.`;
+    }
+
+    // Update balance display
+    document.getElementById("new-balance-display").textContent = `Updated Balance: ${currentWallet.toFixed(2)}⚡`;
+  });
+</script>
+
+</body>
+</html>
