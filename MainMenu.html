@@ -143,21 +143,16 @@
   <a href="/player" class="menu-btn">Player</a>
 
   <script>
-    // 🛡️ BOUNCER CHECK: Force users to enter via your Wix landing page
+    // 🛡️ STRICT BOUNCER: Must come from Wix every single time
     const allowedWixDomain = "thecoachapps.wixsite.com";
     const previousUrl = document.referrer;
 
-    const cameFromWix = previousUrl.includes(allowedWixDomain);
-    const alreadyVerified = localStorage.getItem("wixSessionUnlocked") === "true";
-
-    if (!cameFromWix && !alreadyVerified) {
-      console.log("Direct access blocked. Redirecting to Wix landing page...");
+    // Check if the source strictly contains your Wix domain
+    if (!previousUrl.includes(allowedWixDomain)) {
+      console.log("Direct access or refresh outside Wix blocked. Redirecting...");
       window.location.href = "https://thecoachapps.wixsite.com/sport-volt";
     } else {
-      if (cameFromWix) {
-        localStorage.setItem("wixSessionUnlocked", "true");
-      }
-      console.log("Access granted to Sport Volt.");
+      console.log("Access granted via Wix.");
     }
 
     // 🔑 Credit management logic
