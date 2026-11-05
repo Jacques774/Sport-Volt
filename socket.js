@@ -1,5 +1,29 @@
-const socket = io("https://prediction-backend-2e20.onrender.com");
+const socket = io("https://prediction-backend-2e20.onrender.com", {
+  reconnection: true,
+  reconnectionAttempts: Infinity, // Never give up trying to reconnect
+  reconnectionDelay: 500,          // Try reconnecting after 0.5 seconds
+  reconnectionDelayMax: 2000,       // Max delay between retries
+  timeout: 10000
+});
 window.socket = socket;
+
+// 🔑 BULLETPROOF MOBILE FIX: Auto-rejoin room when connection recovers from a notification drop
+socket.on("connect", () => {
+  console.log("🔌 Connected to socket server. Socket ID:", socket.id);
+
+  // Grab gameId and playerName from window scope or storage
+  const gameId = window.gameId || sessionStorage.getItem("current_room_code");
+  const playerName = window.currentPlayerName || localStorage.getItem("player_name");
+
+  if (gameId && playerName) {
+    console.log(`🔄 Reconnecting player [${playerName}] to room [${gameId}]...`);
+    socket.emit("player_reconnect", { roomCode: gameId, playerName: playerName });
+  }
+});
+
+socket.on("disconnect", (reason) => {
+  console.warn("⚠️ Disconnected from socket server:", reason);
+});
 
 // ============================
 // LOBBY & PLAYER JOINS
@@ -169,6 +193,17 @@ socket.on("leaderboard_update", (players) => {
   }
 });
 
+socket.on("balance_update", ({ balance }) => {
+  console.log("💰 Server sent balance update:", balance);
+  if (window.currentPlayerName && window.Leaderboard) {
+    window.Leaderboard.update(window.currentPlayerName, balance);
+  }
+  const balanceEl = document.getElementById("player-balance");
+  if (balanceEl) {
+    balanceEl.textContent = `Balance: £${typeof balance === 'number' ? balance.toFixed(2) : balance}`;
+  }
+});
+
 socket.on("cashout_update", ({ playerName, balance }) => {
   console.log(`💸 ${playerName} cashed out. New balance: £${balance}`);
   
@@ -196,7 +231,6 @@ socket.on("new_question", ({ id, current, total, timer }) => {
     return;
   }
 
-  // 🔑 Combine metadata and pass to engine
   const questionData = {
     ...q,
     id,
@@ -210,7 +244,6 @@ socket.on("new_question", ({ id, current, total, timer }) => {
   }
 });
 
-// 🔑 Handle Game Over event globally across all connected clients
 socket.on("game_over", ({ leaderboard }) => {
   if (typeof window.triggerGameOverModal === "function") {
     window.triggerGameOverModal(leaderboard);
