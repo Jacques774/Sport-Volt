@@ -145,15 +145,16 @@
   <a href="/player" class="menu-btn">Player</a>
 
   <script>
-    // 🛡️ URL BOUNCER: Checks if the URL has ?from=wix attached
+    // 🛡️ BULLETPROOF BOUNCER: Checks URL parameter OR active session storage
     const urlParams = new URLSearchParams(window.location.search);
     const fromWix = urlParams.get('from');
+    const hasExistingSession = localStorage.getItem("user_credit") !== null;
 
-    if (fromWix !== 'wix') {
-      console.log("Direct access or refresh outside Wix blocked. Redirecting...");
+    if (fromWix !== 'wix' && !hasExistingSession) {
+      console.log("Direct access blocked. Redirecting to Wix...");
       window.location.href = "https://thesportvolt.wixsite.com/sport-volt";
     } else {
-      console.log("Access granted via Wix.");
+      console.log("Access granted.");
     }
 
     // 🔑 Credit management logic (Defaults to 20.00 Volts for new players)
