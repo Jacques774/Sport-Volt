@@ -5,18 +5,16 @@
   <title>Game Setup | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- 🛡️ STRICT CHECKPOINT GUARD: Must come from Main Menu -->
+  <!-- 🛡️ STRICT CHECKPOINT GUARD: Must have authorized=true from Main Menu -->
   <script>
-    const cameFromMenu = sessionStorage.getItem("coming_from_menu");
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAuthorized = urlParams.get('authorized') === 'true';
     const hasActiveSession = localStorage.getItem("user_credit") !== null;
 
-    if (!cameFromMenu || !hasActiveSession) {
+    if (!isAuthorized || !hasActiveSession) {
       alert("Unauthorized access. You must enter through the Main Menu.");
       window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
     }
-
-    // Clear the flag so a simple browser refresh blocks re-entry unless clicking the menu again
-    sessionStorage.removeItem("coming_from_menu");
   </script>
 
   <style>
