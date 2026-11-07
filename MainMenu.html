@@ -174,10 +174,10 @@
       creditEl.textContent = userCredit.toFixed(2) + "⚡";
     }
 
-    // 🔑 Dynamically update Host link to pass the correct credit balance parameter
+    // 🔑 Dynamically update Host link to pass both the authorization flag and the credit balance parameter
     const hostBtn = document.getElementById("host-btn");
     if (hostBtn) {
-      hostBtn.href = `/gamesetup.html?credit=${userCredit.toFixed(2)}`;
+      hostBtn.href = `/gamesetup.html?authorized=true&credit=${userCredit.toFixed(2)}`;
     }
   </script>
 </body>
