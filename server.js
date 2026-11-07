@@ -4,7 +4,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import cookieParser from "cookie-parser"; // 🔒 Required for the server bouncer cookie check
+import cookieParser from "cookie-parser"; // 🔒 Required for the bouncer cookie check
 
 // ✅ Import separate rugby question banks for default fallbacks
 import { RugbyBlitzQuestions } from "./RugbyQuestions-blitz.js";
@@ -20,16 +20,13 @@ const httpServer = createServer(app);
 // 🔑 BULLETPROOF MOBILE FIX: Increase pingTimeout so quick text messages don't drop players instantly
 const io = new Server(httpServer, { 
   cors: { origin: "*" },
-  pingTimeout: 30000, // 30 seconds buffer before dropping a disconnected player
-  pingInterval: 10000 // Heartbeat ping every 10s
+  pingTimeout: 30000, 
+  pingInterval: 10000 
 });
 
 // ✅ ES modules __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Serve other static game files (css, js, gamesetup, player, etc.)
-app.use(express.static(path.join(__dirname, "public")));
 
 // ==========================================
 // 🛡️ WIX BOUNCER & HANDSHAKE ROUTES
@@ -65,7 +62,9 @@ app.get("/MainMenu.html", serverBouncer, (req, res) => {
   res.sendFile(path.join(__dirname, "MainMenu.html"));
 });
 
-// ✅ Serve other core pages
+// ✅ Serve other core pages (Public static files folder + direct files)
+app.use(express.static(__dirname));
+
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "MainMenu.html")));
 app.get("/gamesetup.html", (req, res) => res.sendFile(path.join(__dirname, "gamesetup.html")));
 app.get("/host", (req, res) => res.sendFile(path.join(__dirname, "host.html")));
@@ -172,20 +171,14 @@ function broadcastLeaderboard(gameId) {
 io.on("connection", (socket) => {
   console.log("🔌 Client connected:", socket.id);
 
-  // --- Pot reveal ---
   socket.on("pot_reveal", ({ gameId }) => {
     if (!games[gameId]) return;
     const potAmount = getGamePot(gameId);
     io.to(gameId).emit("pot_reveal", { amount: potAmount });
-    console.log(`💰 Pot revealed for ${gameId}: £${potAmount}`);
   });
 
-  // Handle join_game
   socket.on("join_game", ({ gameId, playerName, isHost }) => {
-    if (!games[gameId]) {
-      console.warn(`Game ${gameId} not found`);
-      return;
-    }
+    if (!games[gameId]) return;
 
     socket.join(gameId);
 
@@ -210,7 +203,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 🔑 BULLETPROOF MOBILE FIX: Handle automatic reconnection after notification drop
   socket.on("player_reconnect", ({ roomCode, playerName }) => {
     const code = roomCode ? roomCode.toUpperCase() : "";
     if (!games[code] || !playerName) return;
@@ -239,24 +231,19 @@ io.on("connection", (socket) => {
       };
     }
 
-    console.log(`🔄 Player reconnected successfully: ${playerName} in room [${code}]`);
-    
     socket.emit("balance_update", { balance: game.players[socket.id].balance });
     broadcastLeaderboard(code);
   });
 
-  // Handle prediction
   socket.on("prediction", ({ gameId, playerName, choice }) => {
     if (!games[gameId]) return;
     const player = Object.values(games[gameId].players).find(p => p.name === playerName);
     if (player) {
       player.choice = choice; 
-      console.log(`📡 Prediction recorded for ${playerName}: ${choice}`);
     }
     io.to(gameId).emit("prediction_made", { player: playerName, choice });
   });
 
-  // Handle stake_placed
   socket.on("stake_placed", ({ gameId, playerName, amount, choice }) => {
     if (!games[gameId]) return;
     const player = Object.values(games[gameId].players).find(p => p.name === playerName);
@@ -273,7 +260,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle cashout
   socket.on("cashout", ({ gameId, playerName, amount }) => {
     if (!games[gameId]) return;
 
@@ -294,13 +280,10 @@ io.on("connection", (socket) => {
       io.to(gameId).emit("cashout_update", { playerName, balance: player.balance });
 
       broadcastLeaderboard(gameId);
-      console.log(`💸 ${playerName} cashed out. Refund: £${refund}. Remaining Pot: £${newPot}`);
     }
   });
 
-  // Handle start_game
   socket.on("start_game", ({ gameId, host }) => {
-    console.log(`🎮 Game ${gameId} started by host ${host}`);
     io.to(gameId).emit("game_starting", { host });
 
     setTimeout(() => {
@@ -323,10 +306,8 @@ io.on("connection", (socket) => {
     }, 4000);
   });
 
-  // Handle round outcome
   socket.on("round_outcome", ({ gameId, outcome }) => {
     if (!games[gameId]) return;
-    console.log(`✅ Outcome for ${gameId}: ${outcome}`);
     games[gameId].lastOutcome = outcome;
 
     const game = games[gameId];
@@ -367,15 +348,12 @@ io.on("connection", (socket) => {
       });
       game.potBalance = 0;
       io.to(gameId).emit("pot_update", { amount: 0 });
-    } else {
-      console.log("❌ No winners or 0 winning stakes, pot rolls over.");
     }
 
     io.to(gameId).emit("round_outcome", { outcome, winners });
     broadcastLeaderboard(gameId);
   });
 
-  // Handle next round
   socket.on("next_round", ({ gameId }) => {
     const game = games[gameId];
     if (!game) return;
@@ -398,14 +376,11 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Handle Game Over
   socket.on("game_over", ({ gameId, leaderboard }) => {
     if (!games[gameId]) return;
-    console.log(`🏁 Game over triggered for room [${gameId}]`);
     io.to(gameId).emit("game_over", { leaderboard });
   });
 
-  // Handle disconnect
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });
