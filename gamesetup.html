@@ -5,9 +5,8 @@
   <title>Game Setup | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- 🛡️ IRONCLAD NAVIGATION BOUNCER -->
+  <!-- 🛡️ STRICT CHECKPOINT GUARD: Must come from Main Menu -->
   <script>
-    // Check if the user came directly through the Main Menu button
     const cameFromMenu = sessionStorage.getItem("coming_from_menu");
     const hasActiveSession = localStorage.getItem("user_credit") !== null;
 
@@ -16,7 +15,7 @@
       window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
     }
 
-    // Clear the flag immediately so refreshing or re-typing the URL later blocks them
+    // Clear the flag so a simple browser refresh blocks re-entry unless clicking the menu again
     sessionStorage.removeItem("coming_from_menu");
   </script>
 
@@ -236,7 +235,6 @@
   </div>
 
 <script>
-  // 📁 Check if custom lists exist in storage and show/hide the dropdown option accordingly
   function checkCustomDecksAvailability() {
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
     const customOption = document.getElementById("custom-mode-option");
@@ -249,7 +247,6 @@
     }
   }
 
-  // Populate custom folders from localStorage
   function loadCustomFoldersDropdown() {
     const select = document.getElementById("custom-folder-select");
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
@@ -278,7 +275,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    // Check custom deck visibility on page load
     checkCustomDecksAvailability();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -369,7 +365,6 @@
 
         window.GameSession = { gameCode, sport, gameMode, customDeckName, startingBalance, questionCount };
 
-        // 📁 FIXED: Append custom deck parameter to player join link so everyone loads the right questions
         const customParam = customDeckName ? `&custom=${encodeURIComponent(customDeckName)}` : "";
         const joinLink = `${BASE_URL}/player.html?code=${gameCode}&buyin=${startingBalance}&mode=${gameMode}${customParam}`;
         
@@ -378,8 +373,6 @@
 
         linkBox.style.display = "flex";
         startBtn.style.display = "block";
-
-        console.log("Game created on server:", window.GameSession);
       })
       .catch(err => {
         console.error("Error creating game:", err);
@@ -404,14 +397,13 @@
     startBtn.addEventListener("click", () => {
       const { gameCode, gameMode, startingBalance, customDeckName } = window.GameSession;
       
-      // 📁 FIXED: Save active custom deck into localStorage for zero-login persistence before redirecting
       if (customDeckName) {
         localStorage.setItem("active_custom_deck", customDeckName);
       } else {
         localStorage.removeItem("active_custom_deck");
       }
 
-      // 🛡️ Set flag so host.html knows the user came from an authorized flow
+      // Set authorization flag for the next page (host.html)
       sessionStorage.setItem("coming_from_setup", "true");
 
       const customParam = customDeckName ? `&custom=${encodeURIComponent(customDeckName)}` : "";
