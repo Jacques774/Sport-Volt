@@ -161,7 +161,6 @@
     const storedCredit = localStorage.getItem("user_credit");
     let userCredit = storedCredit !== null ? Number(storedCredit) : 20.00;
 
-    // Save initial default credit if it's the user's first time visiting
     if (storedCredit === null) {
       localStorage.setItem("user_credit", userCredit.toFixed(2));
     }
