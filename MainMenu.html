@@ -125,6 +125,18 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
     }
   </style>
+
+  <!-- 🛡️ ABSOLUTE WIX CHECKPOINT GUARD -->
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    // If the secure token coming from the Wix route isn't present, kick them out immediately!
+    if (token !== 'sportvolt_secure_pass') {
+      alert("Access Denied. You must enter through the Wix website.");
+      window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
+    }
+  </script>
 </head>
 <body>
 
@@ -145,17 +157,6 @@
   <a href="/player" class="menu-btn">Player</a>
 
   <script>
-    // 🛡️ TOKEN BOUNCER & REFRESH SAFETY CHECK
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const hasExistingSession = localStorage.getItem("user_credit") !== null;
-
-    // If they didn't come via the secure server token AND don't have an active storage session, bounce to Wix
-    if (token !== 'sportvolt_secure_pass' && !hasExistingSession) {
-      console.log("Direct access blocked. Redirecting to Wix...");
-      window.location.href = "https://thesportvolt.wixsite.com/sport-volt";
-    }
-
     // 🔑 ROBUST CREDIT MANAGEMENT: 
     // Reads storage, but defaults or repairs if it's missing, null, NaN, or zeroed out incorrectly.
     let storedCredit = Number(localStorage.getItem("user_credit"));
