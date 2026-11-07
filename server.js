@@ -4,7 +4,6 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import cookieParser from "cookie-parser"; // 🔒 Required for the bouncer cookie check
 
 // ✅ Import separate rugby question banks for default fallbacks
 import { RugbyBlitzQuestions } from "./RugbyQuestions-blitz.js";
@@ -13,7 +12,6 @@ import { RugbyTacticalQuestions } from "./RugbyQuestions-tactical.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(cookieParser()); // 🔒 Enable cookie parsing on incoming requests
 
 const httpServer = createServer(app);
 
@@ -29,43 +27,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ==========================================
-// 🛡️ WIX BOUNCER & HANDSHAKE ROUTES
+// 🛡️ SIMPLE SECURE HANDSHAKE & BOUNCER
 // ==========================================
 
-// 1. Handshake route: When players click the button on your Wix site, 
-// this sets a secure session cookie and safely redirects them to the menu.
+// 1. Handshake route: When players click from Wix, we issue a secure token redirect
 app.get("/enter-app", (req, res) => {
-  res.cookie('wix_authorized', 'true', { 
-    maxAge: 5 * 60 * 1000, // Valid for 5 minutes during hand-off
-    httpOnly: true, 
-    secure: true, 
-    sameSite: 'lax' 
-  });
-  
-  res.redirect('/MainMenu.html');
+  // Redirect to the menu with a secure access token attached
+  res.redirect('/MainMenu.html?token=sportvolt_secure_pass');
 });
 
-// 2. Server-side Bouncer Middleware: Blocks direct URL typing or bookmarking
-function serverBouncer(req, res, next) {
-  const isAuthorized = req.cookies.wix_authorized === 'true';
-
-  if (!isAuthorized) {
-    // If they typed the URL directly without going through Wix, bounce them straight back!
+// 2. Protected route: MainMenu.html requires the valid token, otherwise bounces back to Wix
+app.get("/MainMenu.html", (req, res) => {
+  const token = req.query.token;
+  if (token !== 'sportvolt_secure_pass') {
     return res.redirect('https://thesportvolt.wixsite.com/sport-volt');
   }
-
-  next();
-}
-
-// 3. Protected route: MainMenu.html cannot be accessed directly by typing the URL
-app.get("/MainMenu.html", serverBouncer, (req, res) => {
   res.sendFile(path.join(__dirname, "MainMenu.html"));
 });
 
-// ✅ Serve other core pages (Public static files folder + direct files)
+// ✅ Serve other static files (css, js, images, etc.)
 app.use(express.static(__dirname));
 
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "MainMenu.html")));
+// ✅ Core Page Routes
+app.get("/", (req, res) => res.redirect('https://thesportvolt.wixsite.com/sport-volt'));
 app.get("/gamesetup.html", (req, res) => res.sendFile(path.join(__dirname, "gamesetup.html")));
 app.get("/host", (req, res) => res.sendFile(path.join(__dirname, "host.html")));
 app.get("/player", (req, res) => res.sendFile(path.join(__dirname, "player.html")));
