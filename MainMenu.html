@@ -145,16 +145,15 @@
   <a href="/player" class="menu-btn">Player</a>
 
   <script>
-    // 🛡️ SESSION BOUNCER: Uses a secure session flag to allow access from your new Wix site without breaking on cross-site headers
-    const authPass = localStorage.getItem("wix_auth_pass");
+    // 🛡️ URL BOUNCER: Checks if the URL has ?from=wix attached
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromWix = urlParams.get('from');
 
-    if (authPass !== "granted_sportvolt_2026") {
-      console.log("Unauthorized direct access. Redirecting...");
+    if (fromWix !== 'wix') {
+      console.log("Direct access or refresh outside Wix blocked. Redirecting...");
       window.location.href = "https://thesportvolt.wixsite.com/sport-volt";
     } else {
-      console.log("Access granted via Wix session.");
-      // Clear the pass so refreshing outside of Wix locks them out again
-      localStorage.removeItem("wix_auth_pass");
+      console.log("Access granted via Wix.");
     }
 
     // 🔑 Credit management logic (Defaults to 20.00 Volts for new players)
