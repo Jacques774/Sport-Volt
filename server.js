@@ -4,6 +4,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser"; // 🔒 Required for the server bouncer cookie check
 
 // ✅ Import separate rugby question banks for default fallbacks
 import { RugbyBlitzQuestions } from "./RugbyQuestions-blitz.js";
@@ -12,6 +13,7 @@ import { RugbyTacticalQuestions } from "./RugbyQuestions-tactical.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser()); // 🔒 Enable cookie parsing on incoming requests
 
 const httpServer = createServer(app);
 
@@ -26,10 +28,44 @@ const io = new Server(httpServer, {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files from project directory
-app.use(express.static(__dirname));
+// Serve other static game files (css, js, gamesetup, player, etc.)
+app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Serve pages
+// ==========================================
+// 🛡️ WIX BOUNCER & HANDSHAKE ROUTES
+// ==========================================
+
+// 1. Handshake route: When players click the button on your Wix site, 
+// this sets a secure session cookie and safely redirects them to the menu.
+app.get("/enter-app", (req, res) => {
+  res.cookie('wix_authorized', 'true', { 
+    maxAge: 5 * 60 * 1000, // Valid for 5 minutes during hand-off
+    httpOnly: true, 
+    secure: true, 
+    sameSite: 'lax' 
+  });
+  
+  res.redirect('/MainMenu.html');
+});
+
+// 2. Server-side Bouncer Middleware: Blocks direct URL typing or bookmarking
+function serverBouncer(req, res, next) {
+  const isAuthorized = req.cookies.wix_authorized === 'true';
+
+  if (!isAuthorized) {
+    // If they typed the URL directly without going through Wix, bounce them straight back!
+    return res.redirect('https://thesportvolt.wixsite.com/sport-volt');
+  }
+
+  next();
+}
+
+// 3. Protected route: MainMenu.html cannot be accessed directly by typing the URL
+app.get("/MainMenu.html", serverBouncer, (req, res) => {
+  res.sendFile(path.join(__dirname, "MainMenu.html"));
+});
+
+// ✅ Serve other core pages
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "MainMenu.html")));
 app.get("/gamesetup.html", (req, res) => res.sendFile(path.join(__dirname, "gamesetup.html")));
 app.get("/host", (req, res) => res.sendFile(path.join(__dirname, "host.html")));
@@ -182,21 +218,6 @@ io.on("connection", (socket) => {
     socket.join(code);
     const game = games[code];
 
-    // Clean up any stale sockets matching this player name
-    for (const [sId, pData] of Object.entries(game.players)) {
-      if (pData.name.trim().toLowerCase() === playerName.trim().toLowerCase()) {
-        delete game.players[sId];
-      }
-    }
-
-    // Re-bind the player to their new socket ID with their preserved balance/stats
-    let existingPlayer = Object.values(game.players).find(p => p.name.trim().toLowerCase() === playerName.trim().toLowerCase());
-    
-    // If not found in players map directly, check if we need to recreate or if they were preserved
-    // (In this loop we cleared duplicate names, so let's make sure we preserve the player state)
-    // Actually, let's write a safer lookup/transfer:
-    
-    // Let's refactor the cleanup/rebind cleanly:
     let matchedPlayer = null;
     for (const [sId, pData] of Object.entries(game.players)) {
       if (pData.name.trim().toLowerCase() === playerName.trim().toLowerCase()) {
@@ -208,7 +229,6 @@ io.on("connection", (socket) => {
     if (matchedPlayer) {
       game.players[socket.id] = matchedPlayer;
     } else {
-      // Fallback if record was somehow purged
       game.players[socket.id] = {
         name: playerName,
         balance: game.startingBalance || 100,
@@ -221,7 +241,6 @@ io.on("connection", (socket) => {
 
     console.log(`🔄 Player reconnected successfully: ${playerName} in room [${code}]`);
     
-    // Send fresh balance back to client & update room leaderboard
     socket.emit("balance_update", { balance: game.players[socket.id].balance });
     broadcastLeaderboard(code);
   });
@@ -389,8 +408,6 @@ io.on("connection", (socket) => {
   // Handle disconnect
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
-    // Note: We intentionally do NOT immediately wipe the player from game.players here, 
-    // allowing the 30s ping timeout and `player_reconnect` event to restore them if they return quickly!
   });
 });
 
