@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <title>Game Setup | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- 🛡️ STRICT IN-APP SESSION GUARD -->
+  <script>
+    // Check if the user has an active session/credit from the Main Menu
+    const hasActiveSession = localStorage.getItem("user_credit") !== null;
+
+    if (!hasActiveSession) {
+      alert("Unauthorized access. You must enter through the Main Menu.");
+      window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
+    }
+  </script>
+
   <style>
     :root {
       --bg-primary: #050b14;       /* Deep midnight stadium background */
