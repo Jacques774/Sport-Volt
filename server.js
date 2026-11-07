@@ -27,29 +27,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ==========================================
-// 🛡️ SIMPLE SECURE HANDSHAKE & BOUNCER
+// 🛡️ FULL-APP SERVER BOUNCER & HANDSHAKE
 // ==========================================
 
-// 1. Handshake route: When players click from Wix, we issue a secure token redirect
+// 1. Handshake route: When players click from Wix, issue the secure token and send them to Main Menu
 app.get("/enter-app", (req, res) => {
-  // Redirect to the menu with a secure access token attached
   res.redirect('/MainMenu.html?token=sportvolt_secure_pass');
 });
 
-// 2. Protected route: MainMenu.html requires the valid token, otherwise bounces back to Wix
-app.get("/MainMenu.html", (req, res) => {
-  const token = req.query.token;
-  if (token !== 'sportvolt_secure_pass') {
-    return res.redirect('https://thesportvolt.wixsite.com/sport-volt');
+// 2. Global Bouncer Middleware: Protects ALL HTML pages from direct URL typing / bookmarking
+app.use((req, res, next) => {
+  // Check if the user is requesting an HTML file (e.g., MainMenu, gamesetup, host, player)
+  const isHtmlRequest = req.path.endsWith('.html') || req.path === '/' || req.path === '/host' || req.path === '/player';
+
+  if (isHtmlRequest) {
+    const token = req.query.token;
+    
+    // If they don't have the secure token attached, kick them straight to Wix!
+    if (token !== 'sportvolt_secure_pass') {
+      return res.redirect('https://thesportvolt.wixsite.com/sport-volt');
+    }
   }
-  res.sendFile(path.join(__dirname, "MainMenu.html"));
+
+  next();
 });
 
-// ✅ Serve other static files (css, js, images, etc.)
+// ✅ Serve static files (CSS, JS, images can still load freely so pages render correctly)
 app.use(express.static(__dirname));
 
-// ✅ Core Page Routes
+// ✅ Core Route Handlers
 app.get("/", (req, res) => res.redirect('https://thesportvolt.wixsite.com/sport-volt'));
+app.get("/MainMenu.html", (req, res) => res.sendFile(path.join(__dirname, "MainMenu.html")));
 app.get("/gamesetup.html", (req, res) => res.sendFile(path.join(__dirname, "gamesetup.html")));
 app.get("/host", (req, res) => res.sendFile(path.join(__dirname, "host.html")));
 app.get("/player", (req, res) => res.sendFile(path.join(__dirname, "player.html")));
