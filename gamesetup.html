@@ -5,19 +5,17 @@
   <title>Game Setup | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- 🛡️ BULLETPROOF MENU-ONLY GUARD -->
+  <!-- 🛡️ ABSOLUTE URL CHECKPOINT GUARD -->
   <script>
-    // Check if the authorization flag was stamped by the Main Menu button
-    const isAuthorized = sessionStorage.getItem("menu_authorized");
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAuthorized = urlParams.get('authorized') === 'true';
     const hasActiveSession = localStorage.getItem("user_credit") !== null;
 
-    if (isAuthorized !== "true" || !hasActiveSession) {
+    // If they didn't come via the Main Menu button OR don't have credits, bounce them to Wix
+    if (!isAuthorized || !hasActiveSession) {
       alert("Unauthorized access. You must enter through the Main Menu.");
       window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
     }
-
-    // Clear the flag so refreshing this page blocks re-entry unless clicking the menu again
-    sessionStorage.removeItem("menu_authorized");
   </script>
 
   <style>
@@ -404,7 +402,6 @@
         localStorage.removeItem("active_custom_deck");
       }
 
-      // Set authorization flag for the next page (host.html)
       sessionStorage.setItem("coming_from_setup", "true");
 
       const customParam = customDeckName ? `&custom=${encodeURIComponent(customDeckName)}` : "";
