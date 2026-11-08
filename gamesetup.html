@@ -4,20 +4,6 @@
   <meta charset="UTF-8">
   <title>Game Setup | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- 🛡️ STRICT CHECKPOINT GUARD: Must come from Main Menu with valid tokens -->
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const isAuthorized = urlParams.get('authorized') === 'true';
-    const hasActiveSession = localStorage.getItem("user_credit") !== null;
-
-    if (token !== 'sportvolt_secure_pass' || !isAuthorized || !hasActiveSession) {
-      alert("Unauthorized access. You must enter through the Main Menu.");
-      window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
-    }
-  </script>
-
   <style>
     :root {
       --bg-primary: #050b14;       /* Deep midnight stadium background */
@@ -401,8 +387,6 @@
       } else {
         localStorage.removeItem("active_custom_deck");
       }
-
-      sessionStorage.setItem("coming_from_setup", "true");
 
       const customParam = customDeckName ? `&custom=${encodeURIComponent(customDeckName)}` : "";
       window.location.href = `${BASE_URL}/host?code=${gameCode}&buyin=${startingBalance}&mode=${gameMode}${customParam}`;
