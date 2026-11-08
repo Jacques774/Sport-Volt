@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Main Menu | Sport Volt</title>
-  <link rel="stylesheet" href="styles.css"> <!-- optional external CSS -->
+  <link rel="stylesheet" href="styles.css">
   <style>
     :root {
       --bg-primary: #050b14;       /* Deep midnight stadium background from Wix */
@@ -158,26 +158,24 @@
 
   <script>
     // 🔑 ROBUST CREDIT MANAGEMENT: 
-    // Reads storage, but defaults or repairs if it's missing, null, NaN, or zeroed out incorrectly.
     let storedCredit = Number(localStorage.getItem("user_credit"));
     
     if (isNaN(storedCredit) || storedCredit <= 0) {
-      storedCredit = 20.00; // Default fresh starting balance
+      storedCredit = 20.00; 
     }
 
     let userCredit = storedCredit;
     localStorage.setItem("user_credit", userCredit.toFixed(2));
     
-    // Update credit display element safely
     const creditEl = document.getElementById("user-credit");
     if (creditEl) {
       creditEl.textContent = userCredit.toFixed(2) + "⚡";
     }
 
-    // 🔑 Dynamically update Host link to pass both the authorization flag and the credit balance parameter
+    // 🔑 Pass token, authorization flag, AND credit balance so the chain remains intact!
     const hostBtn = document.getElementById("host-btn");
     if (hostBtn) {
-      hostBtn.href = `/gamesetup.html?authorized=true&credit=${userCredit.toFixed(2)}`;
+      hostBtn.href = `/gamesetup.html?token=sportvolt_secure_pass&authorized=true&credit=${userCredit.toFixed(2)}`;
     }
   </script>
 </body>
