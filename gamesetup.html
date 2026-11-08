@@ -5,14 +5,14 @@
   <title>Game Setup | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- 🛡️ ABSOLUTE URL CHECKPOINT GUARD -->
+  <!-- 🛡️ STRICT CHECKPOINT GUARD: Must come from Main Menu with valid tokens -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
     const isAuthorized = urlParams.get('authorized') === 'true';
     const hasActiveSession = localStorage.getItem("user_credit") !== null;
 
-    // If they didn't come via the Main Menu button OR don't have credits, bounce them to Wix
-    if (!isAuthorized || !hasActiveSession) {
+    if (token !== 'sportvolt_secure_pass' || !isAuthorized || !hasActiveSession) {
       alert("Unauthorized access. You must enter through the Main Menu.");
       window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
     }
