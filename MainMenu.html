@@ -124,6 +124,28 @@
       color: #000;
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
     }
+
+    /* 🏠 Back to Wix Home Button Style */
+    .wix-home-btn {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .wix-home-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    }
   </style>
 
   <!-- 🛡️ ABSOLUTE WIX CHECKPOINT GUARD: Blocks direct URL typing -->
@@ -155,6 +177,9 @@
   <h1>Main Menu</h1>
   <a href="/gamesetup.html" id="host-btn" class="menu-btn">Host Player</a>
   <a href="/player" class="menu-btn">Player</a>
+
+  <!-- 🏠 Back to Wix Website Button -->
+  <a href="https://thesportvolt.wixsite.com/sport-volt" class="wix-home-btn">🏠 Return to Wix Site</a>
 
   <script>
     // 🔑 ROBUST CREDIT MANAGEMENT: 
