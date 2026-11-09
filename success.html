@@ -39,7 +39,6 @@
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6);
     }
 
-    /* ⚡ Volt Icon Container */
     .volt-icon {
       font-size: 3.2rem;
       color: var(--accent-blue);
@@ -118,7 +117,7 @@
     }
 
     .home-btn {
-      display: none; /* Hidden until the draw is completed */
+      display: none;
       width: 100%;
       padding: 14px;
       border-radius: 30px;
@@ -157,16 +156,14 @@
       Current Balance: Loading...
     </div>
 
-    <!-- Spin Button -->
     <button id="spin-btn" class="action-btn">Spin For Volts ⚡</button>
 
-    <!-- Navigation Back to Main Menu carrying token -->
     <a href="/MainMenu.html?token=sportvolt_secure_pass" id="home-btn" class="home-btn">Back to Main Menu</a>
   </div>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // 🛡️ 1. TOKEN GUARD: Enforce entry via Wix route
+    /* 🛡️ TEMPORARILY DISABLED BOUNCER FOR TESTING
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
@@ -175,8 +172,8 @@
       window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
       return;
     }
+    */
 
-    // Read current user wallet from localStorage
     const rawWallet = localStorage.getItem("user_credit");
     let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 20.00;
     
@@ -189,7 +186,7 @@
 
     balanceDisplay.textContent = `Current Balance: ${currentWallet.toFixed(2)}⚡`;
 
-    // 🛡️ 2. REFRESH EXPLOIT PROTECTION: Check session state
+    // 🛡️ 2. PREVENT REFRESH EXPLOIT
     const alreadyClaimed = sessionStorage.getItem("free_credit_claimed");
     const previousPrize = sessionStorage.getItem("last_won_prize");
 
@@ -203,7 +200,7 @@
       return;
     }
 
-    // 🎰 3. DYNAMIC LUCKY DRAW & CREDIT ALLOCATION LOGIC
+    // 🎰 3. LUCKY DRAW & CREDIT ALLOCATION
     spinBtn.addEventListener("click", () => {
       spinBtn.disabled = true;
       spinBtn.style.opacity = "0.5";
@@ -220,18 +217,13 @@
         if (counter > 12) {
           clearInterval(rollInterval);
           
-          // Determine final outcome: 5, 10, or 15 Volts
           const wonOutcome = possiblePrizes[Math.floor(Math.random() * possiblePrizes.length)];
-          
-          // Credit the wallet with the exact lucky draw outcome
           currentWallet += wonOutcome;
           
-          // Save updated balance and lock single-claim session flag
           localStorage.setItem("user_credit", currentWallet.toFixed(2));
           sessionStorage.setItem("free_credit_claimed", "true");
           sessionStorage.setItem("last_won_prize", wonOutcome.toString());
 
-          // Update UI components
           drawDisplay.textContent = `🎉 +${wonOutcome} Volts! 🎉`;
           successMsg.textContent = `Success! Added ${wonOutcome}⚡ free credits to your balance.`;
           titleText.textContent = `You Won!`;
