@@ -28,7 +28,6 @@
       margin: 0;
     }
 
-    /* Top-Up Shop Link / Button Style */
     .topup-btn {
       background: transparent;
       color: var(--accent-blue);
@@ -48,7 +47,6 @@
       box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
     }
 
-    /* 📁 Temp Manage Questions Button Style */
     .temp-manager-btn {
       background: rgba(34, 197, 94, 0.1);
       color: var(--yes-green);
@@ -68,7 +66,6 @@
       box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
     }
 
-    /* Credit Box - Styled like your Wix product cards */
     .credit-box {
       background-color: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -100,7 +97,6 @@
       text-transform: uppercase;
     }
 
-    /* Matching your website's pill-shaped neon buttons */
     .menu-btn {
       margin: 10px;
       padding: 14px 40px;
@@ -125,7 +121,6 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
     }
 
-    /* 🏠 Back to Wix Home Button Style */
     .wix-home-btn {
       margin-top: 20px;
       padding: 12px 30px;
@@ -148,27 +143,22 @@
     }
   </style>
 
-  <!-- 🛡️ ABSOLUTE WIX CHECKPOINT GUARD: Blocks direct URL typing -->
+  <!-- 🛡️ ABSOLUTE WIX CHECKPOINT GUARD (Update bouncer redirect to Member Hub) -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
-    // If the secret token coming from your Wix route is missing, kick them out immediately!
     if (token !== 'sportvolt_secure_pass') {
-      alert("Access Denied. You must enter through the Wix website.");
-      window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
+      alert("Access Denied. You must enter through the Wix Member Hub.");
+      window.location.replace("https://thesportvolt.wixsite.com/sport-volt/blank");
     }
   </script>
 </head>
 <body>
 
-  <!-- 📁 Temporary Link to Create/Manage Questions Screen -->
   <a href="/create-question.html" class="temp-manager-btn">📁 Manage Custom Decks (Temp)</a>
-
-  <!-- ⚡ Top-Up Link pointing to success page simulation -->
   <a href="/success.html" id="topup-link" class="topup-btn">⚡ Top Up 10 Volts (£1.00)</a>
 
-  <!-- Credit Display -->
   <div class="credit-box">
     <div class="credit-label">Available Credit</div>
     <div class="credit-amount" id="user-credit">20.00⚡</div>
@@ -178,13 +168,11 @@
   <a href="/gamesetup.html" id="host-btn" class="menu-btn">Host Player</a>
   <a href="/player" class="menu-btn">Player</a>
 
-  <!-- 🏠 Back to Wix Website Button -->
-  <a href="https://thesportvolt.wixsite.com/sport-volt" class="wix-home-btn">🏠 Return to Wix Site</a>
+  <!-- 🏠 Return to Member Hub Button -->
+  <a href="https://thesportvolt.wixsite.com/sport-volt/blank" class="wix-home-btn">🏠 Return to Member Hub</a>
 
   <script>
-    // 🔑 ROBUST CREDIT MANAGEMENT: 
     let storedCredit = Number(localStorage.getItem("user_credit"));
-    
     if (isNaN(storedCredit) || storedCredit <= 0) {
       storedCredit = 20.00; 
     }
@@ -197,7 +185,6 @@
       creditEl.textContent = userCredit.toFixed(2) + "⚡";
     }
 
-    // 🔑 Dynamically pass the security token forward to game setup so the chain stays unbroken
     const hostBtn = document.getElementById("host-btn");
     if (hostBtn) {
       hostBtn.href = `/gamesetup.html?token=sportvolt_secure_pass&authorized=true&credit=${userCredit.toFixed(2)}`;
