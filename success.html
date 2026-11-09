@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Purchase Successful | Sport Volt</title>
+  <title>Daily Credit Claim | Sport Volt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
@@ -12,6 +12,7 @@
       --text-muted: #94a3b8;       /* Muted grey for labels */
       --accent-blue: #00d2ff;      /* Electric cyan glow accent */
       --border-color: #1e293b;     /* Dark subtle borders */
+      --yes-green: #22c55e;        /* Lucky green accent */
     }
 
     html, body {
@@ -67,20 +68,57 @@
       margin-bottom: 20px;
     }
 
+    .draw-box {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--yes-green);
+      background: #050b14;
+      padding: 18px;
+      border-radius: 12px;
+      border: 2px dashed var(--yes-green);
+      margin-bottom: 20px;
+      text-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+      letter-spacing: 1px;
+    }
+
     .balance-box {
-      font-size: 1.3rem;
-      font-weight: 700;
+      font-size: 1.1rem;
+      font-weight: 600;
       color: var(--accent-blue);
       background: #050b14;
-      padding: 16px;
-      border-radius: 12px;
+      padding: 12px;
+      border-radius: 10px;
       border: 1px solid var(--border-color);
-      margin-bottom: 25px;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+      margin-bottom: 20px;
+    }
+
+    .action-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-radius: 30px;
+      border: none;
+      background: var(--yes-green);
+      color: #000;
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+      transition: all 0.3s;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    .action-btn:hover {
+      background: #16a34a;
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.7);
     }
 
     .home-btn {
-      display: block;
+      display: none; /* Hidden until the draw is completed */
       width: 100%;
       padding: 14px;
       border-radius: 30px;
@@ -107,59 +145,103 @@
 <body>
 
   <div class="success-card">
-    <div class="volt-icon">⚡</div>
-    <h1>Purchase Successful</h1>
-    <p id="success-message">Thank you for buying Volts. Your account has been credited.</p>
+    <div class="volt-icon">🎁</div>
+    <h1 id="title-text">Lucky Credit Drop</h1>
+    <p id="success-message">Tap below to spin and win your free Volts!</p>
     
-    <div class="balance-box" id="new-balance-display">
-      Updated Balance: Loading...
+    <div class="draw-box" id="draw-display">
+      ❓ ? ? ❓
     </div>
 
-    <!-- Routed correctly to index.html -->
-    <a href="index.html" class="home-btn">Back to Home</a>
+    <div class="balance-box" id="balance-display">
+      Current Balance: Loading...
+    </div>
+
+    <!-- Spin Button -->
+    <button id="spin-btn" class="action-btn">Spin For Volts ⚡</button>
+
+    <!-- Navigation Back to Main Menu carrying token -->
+    <a href="/MainMenu.html?token=sportvolt_secure_pass" id="home-btn" class="home-btn">Back to Main Menu</a>
   </div>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // 🛡️ 1. WIX BOUNCER: Ensure traffic originates from Wix checkout/domain
-    const allowedWixDomain = "thecoachapps.wixsite.com";
-    const previousUrl = document.referrer;
+    // 🛡️ 1. TOKEN GUARD: Enforce entry via Wix route
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
 
-    // Uncomment the block below once live on Wix to fully enforce bouncer protection:
-    /*
-    if (!previousUrl.includes(allowedWixDomain)) {
-      console.log("Direct URL attempt blocked. Redirecting to Wix...");
-      window.location.href = "https://thecoachapps.wixsite.com/sport-volt";
+    if (token !== 'sportvolt_secure_pass') {
+      console.log("Direct access attempt blocked. Redirecting to Wix...");
+      window.location.replace("https://thesportvolt.wixsite.com/sport-volt");
       return;
     }
-    */
 
-    const urlParams = new URLSearchParams(window.location.search);
-    // Grab how many volts were bought from URL parameter (defaults to 10 for your £1 test)
-    const voltsPurchased = Number(urlParams.get("volts")) || 10;
-
-    // 🛡️ 2. ONE-TIME CREDIT GUARD: Prevent refresh exploits
-    const txId = `tx_${voltsPurchased}_${window.location.search}`;
-    const processedTx = sessionStorage.getItem("last_processed_tx");
-
-    // Read current user credit from localStorage safely (defaults to 20.00 for new players)
+    // Read current user wallet from localStorage
     const rawWallet = localStorage.getItem("user_credit");
     let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 20.00;
+    
+    const balanceDisplay = document.getElementById("balance-display");
+    const drawDisplay = document.getElementById("draw-display");
+    const spinBtn = document.getElementById("spin-btn");
+    const homeBtn = document.getElementById("home-btn");
+    const successMsg = document.getElementById("success-message");
+    const titleText = document.getElementById("title-text");
 
-    if (processedTx === txId) {
-      // User refreshed the page: display current balance without re-adding credits
-      document.getElementById("success-message").textContent = `Your wallet has already been credited for this purchase.`;
-    } else {
-      // First time loading page from checkout: credit the wallet
-      currentWallet += voltsPurchased;
-      localStorage.setItem("user_credit", currentWallet.toFixed(2));
-      sessionStorage.setItem("last_processed_tx", txId);
-      
-      document.getElementById("success-message").textContent = `Successfully added ${voltsPurchased}⚡ to your balance.`;
+    balanceDisplay.textContent = `Current Balance: ${currentWallet.toFixed(2)}⚡`;
+
+    // 🛡️ 2. REFRESH EXPLOIT PROTECTION: Check session state
+    const alreadyClaimed = sessionStorage.getItem("free_credit_claimed");
+    const previousPrize = sessionStorage.getItem("last_won_prize");
+
+    if (alreadyClaimed === "true" && previousPrize) {
+      drawDisplay.textContent = `+${previousPrize}⚡ Won!`;
+      successMsg.textContent = `You have already claimed your lucky draw credits for this session.`;
+      titleText.textContent = `Already Claimed`;
+      spinBtn.style.display = "none";
+      homeBtn.style.display = "block";
+      balanceDisplay.textContent = `Updated Balance: ${currentWallet.toFixed(2)}⚡`;
+      return;
     }
 
-    // Update balance display
-    document.getElementById("new-balance-display").textContent = `Updated Balance: ${currentWallet.toFixed(2)}⚡`;
+    // 🎰 3. DYNAMIC LUCKY DRAW & CREDIT ALLOCATION LOGIC
+    spinBtn.addEventListener("click", () => {
+      spinBtn.disabled = true;
+      spinBtn.style.opacity = "0.5";
+      successMsg.textContent = "Spinning the prize wheel...";
+
+      const possiblePrizes = [5, 10, 15];
+      
+      let counter = 0;
+      const rollInterval = setInterval(() => {
+        const tempPrize = possiblePrizes[Math.floor(Math.random() * possiblePrizes.length)];
+        drawDisplay.textContent = `⚡ ${tempPrize} ⚡`;
+        counter++;
+
+        if (counter > 12) {
+          clearInterval(rollInterval);
+          
+          // Determine final outcome: 5, 10, or 15 Volts
+          const wonOutcome = possiblePrizes[Math.floor(Math.random() * possiblePrizes.length)];
+          
+          // Credit the wallet with the exact lucky draw outcome
+          currentWallet += wonOutcome;
+          
+          // Save updated balance and lock single-claim session flag
+          localStorage.setItem("user_credit", currentWallet.toFixed(2));
+          sessionStorage.setItem("free_credit_claimed", "true");
+          sessionStorage.setItem("last_won_prize", wonOutcome.toString());
+
+          // Update UI components
+          drawDisplay.textContent = `🎉 +${wonOutcome} Volts! 🎉`;
+          successMsg.textContent = `Success! Added ${wonOutcome}⚡ free credits to your balance.`;
+          titleText.textContent = `You Won!`;
+          balanceDisplay.textContent = `Updated Balance: ${currentWallet.toFixed(2)}⚡`;
+          
+          spinBtn.style.display = "none";
+          homeBtn.style.display = "block";
+        }
+      }, 90);
+    });
   });
 </script>
 
