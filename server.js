@@ -166,11 +166,15 @@ io.on("connection", (socket) => {
     const game = games[gameId];
     if (!game) return;
 
-    // Send back the current authoritative end time so client snaps instantly
+    // Ensure socket re-joins the room in case connection dropped/reset
+    socket.join(gameId);
+
+    // Send back authoritative end time, question count, and current pot balance
     socket.emit("sync_state", {
       endTime: game.currentQuestionEndTime,
       current: game.currentQuestionIndex,
-      total: game.questionCount
+      total: game.questionCount,
+      potBalance: game.potBalance || 0
     });
   });
 
