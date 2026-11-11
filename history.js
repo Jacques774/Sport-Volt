@@ -8,7 +8,10 @@ window.History = {
     // Timestamp for display
     entry.timestamp = new Date();
 
-    // Store entry
+    // Store entry safely with parsed numbers
+    entry.oldBalance = Number(entry.oldBalance || 0);
+    entry.newBalance = Number(entry.newBalance || entry.oldBalance);
+
     this.items.push(entry);
 
     // Re-render list
@@ -30,13 +33,14 @@ window.History = {
   },
 
   formatTime(date) {
-    const d = date.toLocaleDateString("en-GB", {
+    const validDate = date instanceof Date ? date : new Date();
+    const d = validDate.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric"
     });
 
-    const t = date.toLocaleTimeString("en-GB", {
+    const t = validDate.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit"
     });
@@ -91,9 +95,19 @@ window.History = {
  * HISTORY PANEL (SLIDE-UP)
  *******************************/
 window.openHistory = function () {
-  document.getElementById("historyPanel").classList.add("active");
+  const panel = document.getElementById("historyPanel");
+  if (panel) {
+    panel.classList.add("active");
+    // Ensure history list updates instantly upon opening
+    if (window.History && typeof window.History.render === "function") {
+      window.History.render();
+    }
+  }
 };
 
 window.closeHistory = function () {
-  document.getElementById("historyPanel").classList.remove("active");
+  const panel = document.getElementById("historyPanel");
+  if (panel) {
+    panel.classList.remove("active");
+  }
 };
