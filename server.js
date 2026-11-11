@@ -100,6 +100,7 @@ app.post("/api/create-game", (req, res) => {
     customQuestions: customQuestions || [],
     currentQuestionId: null,
     currentQuestionIndex: 0,
+    currentQuestionEndTime: null, // 🔑 Tracks absolute end time on server
     lastOutcome: null,
     startingBalance: Number(startingBalance) >= 20 ? Number(startingBalance) : 100,
     questionCount: Number(questionCount) || 20
@@ -158,6 +159,19 @@ io.on("connection", (socket) => {
     if (!games[gameId]) return;
     const potAmount = getGamePot(gameId);
     io.to(gameId).emit("pot_reveal", { amount: potAmount });
+  });
+
+  // 🔑 Handle client sync request when returning from background / phone call
+  socket.on("request_sync", ({ gameId }) => {
+    const game = games[gameId];
+    if (!game) return;
+
+    // Send back the current authoritative end time so client snaps instantly
+    socket.emit("sync_state", {
+      endTime: game.currentQuestionEndTime,
+      current: game.currentQuestionIndex,
+      total: game.questionCount
+    });
   });
 
   socket.on("join_game", ({ gameId, playerName, isHost }) => {
@@ -279,9 +293,14 @@ io.on("connection", (socket) => {
       game.currentQuestionId = selectedQ.id;
       game.currentQuestionIndex = 1;
 
+      // 🔑 Calculate absolute server end time (timer is in seconds)
+      const durationSeconds = selectedQ.timer || 60;
+      game.currentQuestionEndTime = Date.now() + (durationSeconds * 1000);
+
       io.to(gameId).emit("new_question", { 
         id: selectedQ.id, 
-        timer: selectedQ.timer,
+        timer: durationSeconds,
+        endTime: game.currentQuestionEndTime, // 🔑 Broadcast absolute target time
         current: game.currentQuestionIndex,
         total: game.questionCount,
         question: selectedQ
@@ -350,9 +369,14 @@ io.on("connection", (socket) => {
     game.currentQuestionId = selectedQ.id;
     game.currentQuestionIndex = (game.currentQuestionIndex || 0) + 1;
     
+    // 🔑 Calculate new absolute server end time for the round
+    const durationSeconds = selectedQ.timer || 60;
+    game.currentQuestionEndTime = Date.now() + (durationSeconds * 1000);
+
     io.to(gameId).emit("new_question", { 
       id: selectedQ.id, 
-      timer: selectedQ.timer,
+      timer: durationSeconds,
+      endTime: game.currentQuestionEndTime, // 🔑 Broadcast absolute target time
       current: game.currentQuestionIndex,
       total: game.questionCount,
       question: selectedQ
