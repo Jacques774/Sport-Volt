@@ -30,17 +30,22 @@ class Pot {
 
     let timeLeft = calculateRemaining();
 
+    // 🔑 Fire immediately on start so UI updates instantly without 1s delay
+    if (onCountdown) {
+      onCountdown(timeLeft);
+    }
+
     this.interval = setInterval(() => {
       timeLeft = calculateRemaining();
 
-      if (timeLeft > 0) {
-        if (onCountdown) onCountdown(timeLeft);
-      } else {
+      if (onCountdown) {
+        onCountdown(timeLeft);
+      }
+
+      if (timeLeft <= 0) {
         clearInterval(this.interval);
         this.interval = null;
         this.stakeOpen = false;
-
-        if (onCountdown) onCountdown(0);
 
         // Only host requests reveal from backend
         if (window.isHost && window.socket) {
