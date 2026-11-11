@@ -249,9 +249,18 @@ socket.on("new_question", ({ id, current, total, timer, question: serverQuestion
 // 🔑 Handle server sync response when returning from background / phone call
 socket.on("sync_state", (serverState) => {
   if (!serverState) return;
+  
   if (serverState.endTime && typeof Engine !== "undefined" && Engine.currentQuestion) {
     Engine.currentQuestion.endTime = serverState.endTime;
     console.log("🔄 Synced absolute question endTime from server.");
+  }
+
+  // Sync pot balance if provided by server
+  if (serverState.potBalance !== undefined && window.pot) {
+    window.pot.potBalance = serverState.potBalance;
+    if (typeof window.updatePot === "function") {
+      window.updatePot(serverState.potBalance);
+    }
   }
 });
 
