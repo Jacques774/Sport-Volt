@@ -7,7 +7,7 @@ const socket = io("https://prediction-backend-2e20.onrender.com", {
 });
 window.socket = socket;
 
-// 🔑 BULLETPROOF MOBILE FIX: Auto-rejoin room when connection recovers from a notification drop
+// 🔑 BULLETPROOF MOBILE FIX: Auto-rejoin room & request state sync when connection recovers
 socket.on("connect", () => {
   console.log("🔌 Connected to socket server. Socket ID:", socket.id);
 
@@ -18,6 +18,9 @@ socket.on("connect", () => {
   if (gameId && playerName) {
     console.log(`🔄 Reconnecting player [${playerName}] to room [${gameId}]...`);
     socket.emit("player_reconnect", { roomCode: gameId, playerName: playerName });
+    
+    // 🔑 Immediately request a sync to recover pot balance and timers
+    socket.emit("request_sync", { gameId, playerName });
   }
 });
 
@@ -100,7 +103,7 @@ socket.on("pot_update", ({ amount }) => {
   const potEl = document.getElementById("potAmount");
   if (potEl) {
     potEl.textContent = `Pot: £${Number(amount || 0).toFixed(2)}`;
-    if (amount > 0) {
+    if (amount > 0 && !window.isStakeWindowActive) {
       potEl.style.display = "inline";
     }
   }
@@ -255,11 +258,17 @@ socket.on("sync_state", (serverState) => {
     console.log("🔄 Synced absolute question endTime from server.");
   }
 
-  // Sync pot balance if provided by server
+  // 🔑 Sync pot balance and force display visible if stake window is closed
   if (serverState.potBalance !== undefined && window.pot) {
     window.pot.potBalance = serverState.potBalance;
-    if (typeof window.updatePot === "function") {
-      window.updatePot(serverState.potBalance);
+    
+    const potEl = document.getElementById("potAmount");
+    if (potEl) {
+      if (!window.isStakeWindowActive) {
+        potEl.style.removeProperty("display");
+        potEl.style.display = "inline";
+      }
+      potEl.textContent = `Pot: £${Number(serverState.potBalance).toFixed(2)}`;
     }
   }
 });
