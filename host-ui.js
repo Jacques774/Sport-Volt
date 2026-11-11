@@ -105,6 +105,44 @@ if (!gameId) {
 }
 window.gameId = gameId;
 
+// 🔄 BULLETPROOF TAB VISIBILITY RE-SYNC & WAKE-UP HANDLER FOR HOST
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    console.log("Host tab focused - checking connection and syncing state...");
+    
+    if (!window.socket || !window.socket.connected) {
+      if (typeof window.socket?.connect === "function") {
+        window.socket.connect();
+      }
+    } else if (window.gameId) {
+      window.socket.emit("request_sync", { 
+        gameId: window.gameId, 
+        playerName: window.currentPlayerName || "Host" 
+      });
+    }
+
+    // 🔑 FORCE RE-KICK ACTIVE ENGINE TIMER LOOP UPON WAKE-UP IF AVAILABLE
+    if (window.Engine && window.Engine.currentQuestion && window.Engine.currentQuestion.endTime) {
+      clearInterval(window.questionCountdown);
+      window.questionCountdown = Timer.start(window.Engine.currentQuestion,
+        (timeLeft) => {
+          const qInfo = document.getElementById("q-info");
+          if (qInfo) {
+            qInfo.innerHTML = `You chose: ${window.Engine.currentQuestion.userChoice || "--"}<br>
+              Stake: ${window.Engine.currentQuestion.stake ? window.Engine.currentQuestion.stake.toFixed(2) : 0}⚡<br>
+              Timer: ${timeLeft}s`;
+          }
+        },
+        () => {
+          if (window.isHost) {
+            window.openHostOutcome(window.Engine.currentQuestion.text);
+          }
+        }
+      );
+    }
+  }
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   window.totalWins = 0;
   window.totalCashouts = 0;
