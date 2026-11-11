@@ -160,8 +160,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let lastSeenHostIndex = 0;
 
-  // Listen for server broadcast of new question
-  socket.on("new_question", ({ id, current, total, question: serverQuestion }) => {
+  // Listen for server broadcast of new question (with absolute timestamp support)
+  socket.on("new_question", ({ id, current, total, question: serverQuestion, endTime }) => {
     // 🔑 Stop loading questions if game is over
     if (window.isGameOver) {
       console.log("🛑 Game is complete. Ignoring new question emission.");
@@ -181,6 +181,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       question = RugbyQuestions.getRand(gameMode);
     }
 
+    // Attach absolute end time for background resilience
+    if (endTime) {
+      question.endTime = endTime;
+    }
+
     console.log(`📡 Host received new question: ${question.text}`);
     if (typeof Engine !== "undefined" && typeof Engine.nextQuestion === "function") {
       Engine.nextQuestion(question);
@@ -189,6 +194,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tallyEl = document.getElementById("host-question-tally");
     if (tallyEl && current !== undefined && total !== undefined) {
       tallyEl.textContent = `Question ${current} of ${total}`;
+    }
+  });
+
+  // Handle server sync responses when reconnecting or refocusing tab
+  socket.on("sync_state", (serverState) => {
+    if (!serverState) return;
+    if (serverState.endTime && typeof Engine !== "undefined" && Engine.currentQuestion) {
+      Engine.currentQuestion.endTime = serverState.endTime;
     }
   });
 
