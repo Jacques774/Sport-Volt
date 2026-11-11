@@ -358,7 +358,7 @@ window.startPreCountdown = function (onDone) {
   }, 1000);
 };
 
-// 🔄 TAB VISIBILITY RE-SYNC HANDLER FOR PLAYERS
+// 🔄 BULLETPROOF TAB VISIBILITY RE-SYNC HANDLER FOR PLAYERS
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     console.log("Player tab focused - syncing state with server...");
@@ -369,6 +369,20 @@ document.addEventListener("visibilitychange", () => {
         gameId: window.gameId, 
         playerName: window.currentPlayerName 
       });
+    }
+
+    // 🔑 FORCE RE-KICK ACTIVE ENGINE TIMER LOOP UPON WAKE-UP IF AVAILABLE
+    if (window.Engine && window.Engine.currentQuestion && window.Engine.currentQuestion.endTime) {
+      clearInterval(window.questionCountdown);
+      window.questionCountdown = setInterval(() => {
+        const remaining = Math.max(0, Math.floor((window.Engine.currentQuestion.endTime - Date.now()) / 1000));
+        const qInfo = document.getElementById("q-info");
+        if (qInfo) {
+          qInfo.innerHTML = `You chose: ${window.Engine.currentQuestion.userChoice || "--"}<br>
+            Stake: ${window.Engine.currentQuestion.stake ? window.Engine.currentQuestion.stake.toFixed(2) : 0}⚡<br>
+            Timer: ${remaining}s`;
+        }
+      }, 1000);
     }
   }
 });
