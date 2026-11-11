@@ -358,6 +358,21 @@ window.startPreCountdown = function (onDone) {
   }, 1000);
 };
 
+// 🔄 TAB VISIBILITY RE-SYNC HANDLER FOR PLAYERS
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    console.log("Player tab focused - syncing state with server...");
+    if (!socket || !socket.connected) {
+      socket.connect();
+    } else if (window.gameId) {
+      socket.emit("request_sync", { 
+        gameId: window.gameId, 
+        playerName: window.currentPlayerName 
+      });
+    }
+  }
+});
+
 const statusDot = document.createElement("div");
 statusDot.id = "socket-status";
 statusDot.style.width = "10px";
@@ -387,7 +402,7 @@ socket.on("game_starting", ({ host }) => {
 
 let lastSeenPlayerIndex = 0;
 
-socket.on("new_question", ({ id, timer, current, total, question: serverQuestion }) => {
+socket.on("new_question", ({ id, timer, current, total, question: serverQuestion, endTime }) => {
   if (window.isGameOver) return;
 
   if (current !== undefined) {
@@ -405,9 +420,12 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
     question = RugbyQuestions.getRand(gameMode);
   }
 
+  const duration = timer || question.timer || 90;
+
   const questionData = {
     ...question,
-    timer: timer || question.timer || 90,
+    timer: duration,
+    endTime: endTime || (Date.now() + duration * 1000),
     current,
     total
   };
@@ -423,6 +441,14 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
 
   const activeCard = document.getElementById("active-card");
   if (activeCard && !window.isGameOver) activeCard.style.display = "block";
+});
+
+// Handle server sync responses when reconnecting or refocusing tab
+socket.on("sync_state", (serverState) => {
+  if (!serverState) return;
+  if (serverState.endTime && typeof Engine !== "undefined" && Engine.currentQuestion) {
+    Engine.currentQuestion.endTime = serverState.endTime;
+  }
 });
 
 // 🔑 GAME OVER LISTENER (SAFE NUMERIC PARSING & AUTO LEADERBOARD OPEN)
