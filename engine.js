@@ -151,20 +151,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================
-  // TIMER & UTILS
+  // RESILIENT ABSOLUTE TIMER
   // ============================
   const Timer = {
     start(question, onTick, onEnd) {
-      let timeLeft = question.timer || 60;
+      const duration = question.timer || 60;
+      const endTime = question.endTime || (Date.now() + duration * 1000);
+      question.endTime = endTime;
+
+      function calculateRemaining() {
+        const now = Date.now();
+        return Math.max(0, Math.floor((endTime - now) / 1000));
+      }
+
+      let timeLeft = calculateRemaining();
       onTick(timeLeft);
+
       const interval = setInterval(() => {
-        timeLeft--;
+        timeLeft = calculateRemaining();
         onTick(timeLeft);
         if (timeLeft <= 0) {
           clearInterval(interval);
           onEnd();
         }
       }, 1000);
+
       return interval;
     }
   };
@@ -174,6 +185,23 @@ document.addEventListener("DOMContentLoaded", () => {
       return Number(amount || 0).toFixed(2);
     }
   };
+
+  // 🔄 TAB VISIBILITY RE-SYNC HANDLER
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      console.log("Tab focused - checking connection and syncing state...");
+      if (!window.socket || window.socket.readyState !== WebSocket.OPEN) {
+        if (typeof window.connectSocket === "function") {
+          window.connectSocket();
+        }
+      } else {
+        window.socket.emit("request_sync", { 
+          gameId: window.gameId, 
+          playerName: getActivePlayerName() 
+        });
+      }
+    }
+  });
 
   // ============================
   // GAME OVER MODAL HELPER (SAFE NUMERIC PARSING & GUARD)
@@ -290,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
       this.currentQuestion = { 
         ...q, 
         timer: finalTimer, 
+        endTime: q.endTime || (Date.now() + finalTimer * 1000),
         stake: 0, 
         userChoice: null, 
         outcome: null, 
@@ -570,6 +599,14 @@ document.addEventListener("DOMContentLoaded", () => {
     window.socket.on("game_over", ({ leaderboard }) => {
       triggerGameOverModal(leaderboard);
     });
+
+    // Handle incoming server sync state response
+    window.socket.on("sync_state", (serverState) => {
+      if (!serverState) return;
+      if (Engine.currentQuestion && serverState.endTime) {
+        Engine.currentQuestion.endTime = serverState.endTime;
+      }
+    });
   }
 
   if (btnYes) {
@@ -668,11 +705,12 @@ document.addEventListener("DOMContentLoaded", () => {
         q.stake = 0;
       }
 
+      const remainingTime = q && q.endTime ? Math.max(0, Math.floor((q.endTime - Date.now()) / 1000)) : 60;
       if (qInfo) {
         qInfo.innerHTML = `
           You chose: --<br>
           Stake: --<br>
-          Timer: ${formatTime(Engine.currentQuestion?.timer || 60)}
+          Timer: ${formatTime(remainingTime)}
         `;
       }
 
@@ -776,12 +814,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const qText = document.getElementById("q-text");
     const qInfo = document.getElementById("q-info");
 
+    const remainingTime = q.endTime ? Math.max(0, Math.floor((q.endTime - Date.now()) / 1000)) : (q.timer || 60);
+
     if (qText) qText.textContent = q.text;
     if (qInfo) {
       qInfo.innerHTML = `
         You chose: ${q.userChoice || "--"}<br>
         Stake: ${safeScale(safeStake)}⚡<br>
-        Timer: ${formatTime(q.timer || 60)}
+        Timer: ${formatTime(remainingTime)}
       `;
     }
   }
