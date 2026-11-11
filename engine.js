@@ -626,6 +626,19 @@ document.addEventListener("DOMContentLoaded", () => {
       if (Engine.currentQuestion && serverState.endTime) {
         Engine.currentQuestion.endTime = serverState.endTime;
       }
+      // 🔑 Sync pot balance and force display visible if stake window is closed
+      if (serverState.potBalance !== undefined && window.pot) {
+        window.pot.potBalance = serverState.potBalance;
+        
+        const potEl = document.getElementById("potAmount");
+        if (potEl) {
+          if (!window.isStakeWindowActive) {
+            potEl.style.removeProperty("display");
+            potEl.style.display = "inline";
+          }
+          potEl.textContent = `Pot: £${Number(serverState.potBalance).toFixed(2)}`;
+        }
+      }
     });
   }
 
