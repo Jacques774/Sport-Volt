@@ -186,19 +186,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // 🔄 TAB VISIBILITY RE-SYNC HANDLER
+  // 🔄 BULLETPROOF TAB VISIBILITY RE-SYNC & WAKE-UP HANDLER
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       console.log("Tab focused - checking connection and syncing state...");
-      if (!window.socket || window.socket.readyState !== WebSocket.OPEN) {
-        if (typeof window.connectSocket === "function") {
-          window.connectSocket();
+      
+      if (!window.socket || !window.socket.connected) {
+        if (typeof window.socket?.connect === "function") {
+          window.socket.connect();
         }
-      } else {
+      } else if (window.gameId) {
         window.socket.emit("request_sync", { 
           gameId: window.gameId, 
           playerName: getActivePlayerName() 
         });
+      }
+
+      // 🔑 FORCE RE-KICK ACTIVE TIMER LOOP UPON WAKE-UP
+      if (window.Engine && window.Engine.currentQuestion && window.Engine.currentQuestion.endTime) {
+        clearInterval(window.questionCountdown);
+        window.questionCountdown = Timer.start(window.Engine.currentQuestion,
+          (timeLeft) => {
+            if (qInfo) {
+              qInfo.innerHTML = `You chose: ${window.Engine.currentQuestion.userChoice || "--"}<br>
+                Stake: ${window.Engine.currentQuestion.stake ? window.Engine.currentQuestion.stake.toFixed(2) : 0}⚡<br>
+                Timer: ${formatTime(timeLeft)}`;
+            }
+          },
+          () => {
+            if (window.isHost) {
+              window.openHostOutcome(window.Engine.currentQuestion.text);
+            }
+          }
+        );
       }
     }
   });
@@ -690,6 +710,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (cashoutBtn) {
         cashoutBtn.disabled = false;
+        cashoutBtn.style.opacity = "1";
         cashoutBtn.textContent = `Cash Out: ${(amount * 0.5).toFixed(2)}⚡`;
       }
 
@@ -733,7 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (postEl) postEl.style.display = "none";
 
     if (potEl) {
-      potEl.style.setProperty("display", "none", "important");
+      potEl.style.display = "none";
     }
 
     if (stakeEl) {
@@ -751,7 +772,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (countdownEl) countdownEl.style.display = "none";
     if (potEl) {
-      potEl.style.removeProperty("display");
       potEl.style.display = "inline";
       potEl.textContent = "Pot: " + Number(amount || 0).toFixed(2) + "⚡";
     }
