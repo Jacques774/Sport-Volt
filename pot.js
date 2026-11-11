@@ -14,7 +14,7 @@ class Pot {
     });
   }
 
-  // ✅ Start stake timer with default 10,000ms (10s) duration
+  // ✅ Start stake timer using absolute timestamps for background tab resilience
   startStakeTimer(durationMs = 10000, onCountdown, onReveal) {
     if (this.interval) {
       clearInterval(this.interval);
@@ -22,16 +22,25 @@ class Pot {
     }
 
     this.stakeOpen = true;
-    let timeLeft = Math.floor(durationMs / 1000);
+    const endTime = Date.now() + durationMs;
+
+    const calculateRemaining = () => {
+      return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    };
+
+    let timeLeft = calculateRemaining();
 
     this.interval = setInterval(() => {
-      if (timeLeft >= 0) {
+      timeLeft = calculateRemaining();
+
+      if (timeLeft > 0) {
         if (onCountdown) onCountdown(timeLeft);
-        timeLeft--;
       } else {
         clearInterval(this.interval);
         this.interval = null;
         this.stakeOpen = false;
+
+        if (onCountdown) onCountdown(0);
 
         // Only host requests reveal from backend
         if (window.isHost && window.socket) {
