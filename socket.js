@@ -213,34 +213,45 @@ socket.on("cashout_update", ({ playerName, balance }) => {
 });
 
 // ============================
-// QUESTION FLOW & GAME OVER
+// QUESTION FLOW, SYNC & GAME OVER
 // ============================
-socket.on("new_question", ({ id, current, total, timer }) => {
+socket.on("new_question", ({ id, current, total, timer, question: serverQuestion, endTime }) => {
   console.log("📡 New question received:", id, current, total);
 
   if (window.isGameOver) return;
 
-  if (typeof RugbyQuestions === "undefined") {
-    console.error("❌ RugbyQuestions is not loaded.");
-    return;
+  let question = serverQuestion;
+  if (!question && typeof RugbyQuestions !== "undefined") {
+    question = RugbyQuestions[id];
   }
 
-  const q = RugbyQuestions[id];
-  if (!q) {
+  if (!question) {
     console.error("❌ Question not found for ID:", id);
     return;
   }
 
+  const duration = timer || question.timer || 90;
+
   const questionData = {
-    ...q,
+    ...question,
     id,
     current,
     total,
-    timer
+    timer: duration,
+    endTime: endTime || (Date.now() + duration * 1000)
   };
 
   if (typeof Engine !== "undefined" && typeof Engine.nextQuestion === "function") {
     Engine.nextQuestion(questionData);
+  }
+});
+
+// 🔑 Handle server sync response when returning from background / phone call
+socket.on("sync_state", (serverState) => {
+  if (!serverState) return;
+  if (serverState.endTime && typeof Engine !== "undefined" && Engine.currentQuestion) {
+    Engine.currentQuestion.endTime = serverState.endTime;
+    console.log("🔄 Synced absolute question endTime from server.");
   }
 });
 
