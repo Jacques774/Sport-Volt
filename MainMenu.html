@@ -14,6 +14,7 @@
       --accent-blue: #00d2ff;      /* Electric cyan glow accent */
       --border-color: #1e293b;     /* Dark subtle borders */
       --yes-green: #22c55e;        /* Green accent */
+      --radius-pill: 9999px;
     }
 
     body {
@@ -26,6 +27,7 @@
       justify-content: center;
       height: 100vh;
       margin: 0;
+      overflow: hidden;
     }
 
     .topup-btn {
@@ -121,29 +123,38 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
     }
 
-    .wix-home-btn {
-      margin-top: 20px;
-      padding: 12px 30px;
-      font-size: 0.95rem;
-      font-weight: bold;
-      color: var(--text-muted);
-      background: transparent;
+    /* SLEEK APP-STYLED BACK BUTTON */
+    .btn-app-back {
+      width: 260px;
+      padding: 12px;
+      border-radius: var(--radius-pill);
       border: 1px solid var(--border-color);
-      border-radius: 30px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.3s ease;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      margin-top: 24px;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
-    .wix-home-btn:hover {
+
+    .btn-app-back:hover {
       border-color: var(--accent-blue);
-      color: var(--accent-blue);
-      box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+      color: var(--text-main);
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+      transform: translateY(-1px);
     }
   </style>
 
-  <!-- 🛡️ ABSOLUTE WIX CHECKPOINT GUARD (Update bouncer redirect to Member Hub) -->
+  <!-- 🛡️ ABSOLUTE WIX CHECKPOINT GUARD -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
@@ -168,8 +179,10 @@
   <a href="/gamesetup.html" id="host-btn" class="menu-btn">Host Player</a>
   <a href="/player" class="menu-btn">Player</a>
 
-  <!-- 🏠 Return to Member Hub Button -->
-  <a href="https://thesportvolt.wixsite.com/sport-volt/blank" class="wix-home-btn">🏠 Return to Member Hub</a>
+  <!-- 🏠 Sleek Back to Wix Site Button -->
+  <a href="https://thesportvolt.wixsite.com/sport-volt" class="btn-app-back">
+    ← Back to Sport Volt
+  </a>
 
   <script>
     let storedCredit = Number(localStorage.getItem("user_credit"));
