@@ -111,6 +111,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const stakeCancelBtn = document.getElementById("stake-cancel-btn");
 
   // ============================
+  // CUSTOM STAKE KEYPAD STATE & BINDINGS
+  // ============================
+  let currentStakeValue = "";
+
+  window.pressKey = function(char) {
+    const display = document.getElementById("stakeDisplay");
+    
+    if (char === 'C') {
+      currentStakeValue = "";
+    } else if (char === 'DEL') {
+      currentStakeValue = currentStakeValue.slice(0, -1);
+    } else {
+      if (currentStakeValue.length < 6) {
+        currentStakeValue += char;
+      }
+    }
+
+    if (display) {
+      display.textContent = currentStakeValue === "" ? "0" : currentStakeValue;
+    }
+    
+    if (stakeInput) {
+      stakeInput.value = currentStakeValue;
+    }
+  };
+
+  // ============================
   // PLAYER RESOLUTION HELPERS
   // ============================
   function getActivePlayerName() {
@@ -662,13 +689,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.openStakePopup = function () {
     if (!stakePopup) return;
-    stakePopup.style.display = "flex";
+    currentStakeValue = "";
+    const display = document.getElementById("stakeDisplay");
+    if (display) display.textContent = "0";
     if (stakeInput) stakeInput.value = "";
+    stakePopup.style.display = "flex";
   };
 
   if (stakeSaveBtn) {
     stakeSaveBtn.onclick = () => {
-      const amount = Number(stakeInput?.value);
+      const amount = Number(currentStakeValue || stakeInput?.value);
 
       if (isNaN(amount) || amount <= 0) {
         alert("Enter a valid stake amount.");
