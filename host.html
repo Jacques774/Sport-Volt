@@ -34,6 +34,25 @@
       box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
       transform: translateY(-1px);
     }
+
+    /* CUSTOM APP-THEMED KEYPAD STYLES */
+    .keypad-btn {
+      background: #050b14;
+      border: 1px solid #1e293b;
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 14px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .keypad-btn:active {
+      transform: scale(0.95);
+      background: rgba(0, 210, 255, 0.15);
+      border-color: #00d2ff;
+    }
   </style>
 </head>
 <body>
@@ -158,15 +177,40 @@
     </div>
   </div>
 
-  <!-- STAKE POPUP -->
-  <div id="stakePopup" class="stake-popup">
-    <div class="stake-popup-content">
-      <h3>Place Stake</h3>
-      <input type="number" id="stakeInput" min="1" placeholder="Enter stake" />
+  <!-- ============================
+       STAKE POPUP WITH CUSTOM KEYPAD
+       ============================ -->
+  <div id="stakePopup" class="stake-popup" style="display: none; align-items: center; justify-content: center; background: rgba(5, 11, 20, 0.85); backdrop-filter: blur(4px);">
+    <div class="stake-popup-content" style="background: #0d1726; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; width: 100%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); text-align: center;">
+      <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.5px;">Place Stake</h3>
+      
+      <!-- Display screen for entered stake -->
+      <div id="stakeDisplay" style="background: #050b14; border: 2px solid #00d2ff; border-radius: 10px; color: #00d2ff; font-size: 1.8rem; font-weight: 800; padding: 10px; margin-bottom: 16px; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,210,255,0.3);">
+        0
+      </div>
 
-      <div class="stake-popup-actions">
-        <button id="stake-save-btn">Save</button>
-        <button id="stake-cancel-btn">Cancel</button>
+      <!-- Hidden input for engine data binding -->
+      <input type="hidden" id="stakeInput" value="">
+
+      <!-- Keypad Grid (1 to 9, C for Clear All, 0, ALL IN) -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;">
+        <button type="button" class="keypad-btn" onclick="pressKey('1')">1</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('2')">2</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('3')">3</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('4')">4</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('5')">5</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('6')">6</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('7')">7</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('8')">8</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('9')">9</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('C')" style="color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.95rem; font-weight: 800;">C</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('0')">0</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('ALL_IN')" style="color: #f59e0b; border-color: rgba(245,158,11,0.4); font-size: 0.75rem; font-weight: 800;">ALL IN</button>
+      </div>
+
+      <div class="stake-popup-actions" style="display: flex; gap: 8px;">
+        <button id="stake-save-btn" style="flex: 1; background: #00d2ff; color: #000; font-weight: bold; padding: 11px; border-radius: 30px; border: none; cursor: pointer; text-transform: uppercase;">Save</button>
+        <button id="stake-cancel-btn" style="flex: 1; background: transparent; color: #94a3b8; font-weight: bold; padding: 11px; border-radius: 30px; border: 1px solid #1e293b; cursor: pointer; text-transform: uppercase;">Cancel</button>
       </div>
     </div>
   </div>
