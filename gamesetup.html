@@ -23,13 +23,13 @@
       padding: 6px 12px;
       height: 100vh;
       width: 100vw;
-      overflow: hidden; /* Strict lock against scrolling */
+      overflow: hidden;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      position: fixed; /* Prevents mobile rubber-band scrolling */
+      position: fixed;
     }
 
     .setup-container { 
@@ -69,20 +69,109 @@
       letter-spacing: 0.5px;
     }
 
-    .setup-card input, .setup-card select { 
-      padding: 8px 10px; 
+    .setup-card input { 
+      padding: 9px 12px; 
       border-radius: 8px; 
       border: 1px solid var(--border-color); 
       background: #050b14; 
       color: var(--text-main); 
       font-size: 0.9rem; 
       outline: none;
-      transition: border-color 0.3s;
+      transition: all 0.3s ease;
     }
 
-    .setup-card input:focus, .setup-card select:focus {
+    .setup-card input:focus {
       border-color: var(--accent-blue);
-      box-shadow: 0 0 8px rgba(0, 210, 255, 0.25);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+    }
+
+    /* CUSTOM APP-THEMED DROPDOWN STYLING */
+    .custom-select-wrapper {
+      position: relative;
+      user-select: none;
+      width: 100%;
+    }
+
+    .custom-select {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: #050b14;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .custom-select:hover {
+      border-color: rgba(0, 210, 255, 0.5);
+    }
+
+    .custom-select.open {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+    }
+
+    .custom-select::after {
+      content: "";
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--accent-blue);
+      transition: transform 0.3s ease;
+    }
+
+    .custom-select.open::after {
+      transform: rotate(180deg);
+    }
+
+    .custom-options {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #0d1726;
+      border: 1px solid var(--accent-blue);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .custom-options.open {
+      display: flex;
+    }
+
+    .custom-option {
+      padding: 10px 12px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .custom-option:last-child {
+      border-bottom: none;
+    }
+
+    .custom-option:hover {
+      background: rgba(0, 210, 255, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .custom-option.selected {
+      background: rgba(0, 210, 255, 0.25);
+      color: var(--accent-blue);
+      font-weight: 600;
     }
 
     #create-game-btn { 
@@ -200,30 +289,40 @@
     <h1 class="setup-title">Game Setup</h1>
     <div class="setup-card">
       <label>Sport Type</label>
-      <select id="sport-type">
-        <option value="">Select sport</option>
-        <option value="football">Football</option>
-        <option value="rugby" selected>Rugby</option>
-        <option value="basketball">Basketball</option>
-        <option value="tennis">Tennis</option>
-      </select>
+      <div class="custom-select-wrapper" id="sport-select-wrapper">
+        <div class="custom-select" data-value="rugby">Rugby</div>
+        <div class="custom-options">
+          <div class="custom-option" data-value="football">Football</div>
+          <div class="custom-option selected" data-value="rugby">Rugby</div>
+          <div class="custom-option" data-value="basketball">Basketball</div>
+          <div class="custom-option" data-value="tennis">Tennis</div>
+        </div>
+      </div>
+      <input type="hidden" id="sport-type" value="rugby">
 
       <!-- Game Mode Option -->
       <label>Game Mode</label>
-      <select id="game-mode" onchange="handleGameModeChange()">
-        <option value="blitz" selected>Blitz (Fast Events: 90s - 3m)</option>
-        <option value="tactical">Tactical (Macro Trends: 4m - 10m)</option>
-        <option value="mix">Mix (Combined Blitz & Tactical Deck)</option>
-        <!-- Custom Deck Option (Dynamically shown/hidden) -->
-        <option value="custom" id="custom-mode-option" style="display: none;">📁 Custom Deck (Saved Lists)</option>
-      </select>
+      <div class="custom-select-wrapper" id="mode-select-wrapper">
+        <div class="custom-select" data-value="blitz">Blitz (Fast Events: 90s - 3m)</div>
+        <div class="custom-options" id="mode-options-list">
+          <div class="custom-option selected" data-value="blitz">Blitz (Fast Events: 90s - 3m)</div>
+          <div class="custom-option" data-value="tactical">Tactical (Macro Trends: 4m - 10m)</div>
+          <div class="custom-option" data-value="mix">Mix (Combined Blitz & Tactical Deck)</div>
+          <div class="custom-option" data-value="custom" id="custom-mode-option" style="display: none;">Custom Deck (Saved Lists)</div>
+        </div>
+      </div>
+      <input type="hidden" id="game-mode" value="blitz">
 
-      <!-- Dynamic Custom Folder Dropdown (Appears only when 'custom' is selected) -->
+      <!-- Dynamic Custom Folder Dropdown -->
       <div id="customFolderContainer" style="display: none; flex-direction: column; gap: 3px;">
         <label>Select Custom List</label>
-        <select id="custom-folder-select">
-          <!-- Populated from localStorage -->
-        </select>
+        <div class="custom-select-wrapper" id="custom-folder-wrapper">
+          <div class="custom-select" data-value="">Select a list</div>
+          <div class="custom-options" id="custom-folder-options">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+        <input type="hidden" id="custom-folder-select" value="">
       </div>
 
       <label>Starting Balance (⚡)</label>
@@ -257,6 +356,58 @@
   </div>
 
 <script>
+  // Setup custom dropdown interactivity
+  function setupCustomDropdowns() {
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+      const selectBox = wrapper.querySelector('.custom-select');
+      const optionsBox = wrapper.querySelector('.custom-options');
+      const hiddenInput = wrapper.nextElementSibling;
+
+      selectBox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close all other dropdowns first
+        document.querySelectorAll('.custom-select').forEach(s => {
+          if (s !== selectBox) s.classList.remove('open');
+        });
+        document.querySelectorAll('.custom-options').forEach(o => {
+          if (o !== optionsBox) o.classList.remove('open');
+        });
+
+        selectBox.classList.toggle('open');
+        optionsBox.classList.toggle('open');
+      });
+
+      optionsBox.querySelectorAll('.custom-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const value = option.getAttribute('data-value');
+          const text = option.textContent;
+
+          selectBox.textContent = text;
+          selectBox.setAttribute('data-value', value);
+          hiddenInput.value = value;
+
+          optionsBox.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+
+          selectBox.classList.remove('open');
+          optionsBox.classList.remove('open');
+
+          // Trigger change event if game mode changes
+          if (hiddenInput.id === 'game-mode') {
+            handleGameModeChange();
+          }
+        });
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    window.addEventListener('click', () => {
+      document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
+      document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('open'));
+    });
+  }
+
   function checkCustomDecksAvailability() {
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
     const customOption = document.getElementById("custom-mode-option");
@@ -269,18 +420,42 @@
     }
   }
 
-  function loadCustomFoldersDropdown() {
-    const select = document.getElementById("custom-folder-select");
+  function loadCustomFoldersDropdowns() {
+    const optionsContainer = document.getElementById("custom-folder-options");
+    const selectBox = document.querySelector("#custom-folder-wrapper .custom-select");
+    const hiddenInput = document.getElementById("custom-folder-select");
+    
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
-    select.innerHTML = "";
+    optionsContainer.innerHTML = "";
 
     const keys = Object.keys(allLists);
-    keys.forEach(listName => {
+    if (keys.length > 0) {
+      selectBox.textContent = `${keys[0]} (${allLists[keys[0]].length} questions)`;
+      selectBox.setAttribute('data-value', keys[0]);
+      hiddenInput.value = keys[0];
+    }
+
+    keys.forEach((listName, index) => {
       const count = allLists[listName].length;
-      const opt = document.createElement("option");
-      opt.value = listName;
-      opt.textContent = `📁 ${listName} (${count} questions)`;
-      select.appendChild(opt);
+      const opt = document.createElement("div");
+      opt.className = `custom-option ${index === 0 ? 'selected' : ''}`;
+      opt.setAttribute('data-value', listName);
+      opt.textContent = `${listName} (${count} questions)`;
+      
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectBox.textContent = opt.textContent;
+        selectBox.setAttribute('data-value', listName);
+        hiddenInput.value = listName;
+
+        optionsContainer.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+
+        document.querySelector("#custom-folder-wrapper .custom-select").classList.remove('open');
+        optionsContainer.classList.remove('open');
+      });
+
+      optionsContainer.appendChild(opt);
     });
   }
 
@@ -290,7 +465,7 @@
     
     if (mode === "custom") {
       folderContainer.style.display = "flex";
-      loadCustomFoldersDropdown();
+      loadCustomFoldersDropdowns();
     } else {
       folderContainer.style.display = "none";
     }
@@ -298,6 +473,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     checkCustomDecksAvailability();
+    setupCustomDropdowns();
 
     const urlParams = new URLSearchParams(window.location.search);
     const maxCredit = Number(urlParams.get("credit")) || 50;
