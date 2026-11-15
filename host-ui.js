@@ -147,31 +147,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.totalWins = 0;
   window.totalCashouts = 0;
 
-  // 🔑 INJECT BACK BUTTON INTO HOST SETUP SLIDE IF NOT ALREADY PRESENT
-  const hostSlide = document.getElementById("hostSetupSlide");
-  if (hostSlide && !document.getElementById("host-back-btn")) {
-    const backBtn = document.createElement("button");
-    backBtn.id = "host-back-btn";
-    backBtn.className = "btn-app-back";
-    backBtn.innerHTML = "← Back to Game Setup";
-    backBtn.style.cssText = "width: 100%; padding: 12px; border-radius: 9999px; border: 1px solid #1e2d4a; background: #050b14; color: #94a3b8; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; margin-top: 12px; transition: all 0.25s ease;";
-    
-    backBtn.addEventListener("mouseover", () => {
-      backBtn.style.borderColor = "#00d2ff";
-      backBtn.style.color = "#ffffff";
-    });
-    backBtn.addEventListener("mouseout", () => {
-      backBtn.style.borderColor = "#1e2d4a";
-      backBtn.style.color = "#94a3b8";
-    });
-
-    backBtn.addEventListener("click", () => {
-      window.location.href = "gamesetup.html";
-    });
-
-    hostSlide.appendChild(backBtn);
-  }
-
   // 🔑 FETCH LIVE GAME ROOM DETAILS FROM BACKEND API
   if (gameId) {
     try {
