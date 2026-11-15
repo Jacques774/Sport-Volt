@@ -111,33 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const stakeCancelBtn = document.getElementById("stake-cancel-btn");
 
   // ============================
-  // CUSTOM STAKE KEYPAD STATE & BINDINGS
-  // ============================
-  let currentStakeValue = "";
-
-  window.pressKey = function(char) {
-    const display = document.getElementById("stakeDisplay");
-    
-    if (char === 'C') {
-      currentStakeValue = "";
-    } else if (char === 'DEL') {
-      currentStakeValue = currentStakeValue.slice(0, -1);
-    } else {
-      if (currentStakeValue.length < 6) {
-        currentStakeValue += char;
-      }
-    }
-
-    if (display) {
-      display.textContent = currentStakeValue === "" ? "0" : currentStakeValue;
-    }
-    
-    if (stakeInput) {
-      stakeInput.value = currentStakeValue;
-    }
-  };
-
-  // ============================
   // PLAYER RESOLUTION HELPERS
   // ============================
   function getActivePlayerName() {
@@ -176,6 +149,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return 0;
   }
+
+  // ============================
+  // CUSTOM STAKE KEYPAD STATE & BINDINGS
+  // ============================
+  let currentStakeValue = "";
+
+  window.pressKey = function(char) {
+    const display = document.getElementById("stakeDisplay");
+    
+    if (char === 'C') {
+      // 🔑 CLEAR ALL: Resets entered stake to empty/zero
+      currentStakeValue = "";
+    } else if (char === 'ALL_IN') {
+      // 🔑 ALL IN: Computes player's max balance and sets it as the numerical string
+      const maxBalance = getCurrentPlayerBalance();
+      currentStakeValue = Math.floor(maxBalance).toString();
+    } else {
+      if (currentStakeValue.length < 6) {
+        currentStakeValue += char;
+      }
+    }
+
+    if (display) {
+      display.textContent = currentStakeValue === "" ? "0" : currentStakeValue;
+    }
+    
+    if (stakeInput) {
+      stakeInput.value = currentStakeValue;
+    }
+  };
 
   // ============================
   // RESILIENT ABSOLUTE TIMER
