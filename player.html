@@ -5,6 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prediction Game - Player</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* SLEEK APP-STYLED BACK BUTTON */
+    .btn-app-back {
+      width: 100%;
+      padding: 12px;
+      border-radius: 9999px;
+      border: 1px solid #1e2d4a;
+      background: #050b14;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-app-back:hover {
+      border-color: #00d2ff;
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
 <body>
 
@@ -28,6 +58,11 @@
     </div>
 
     <button id="player-join-btn">Join Game</button>
+
+    <!-- 🏠 Back to Wix Site Button -->
+    <button onclick="window.location.href='https://thesportvolt.wixsite.com/sport-volt'" class="btn-app-back">
+      ← Back to Sport Volt
+    </button>
   </div>
 </div>
 
