@@ -12,6 +12,7 @@
       --text-muted: #94a3b8;       /* Muted grey for labels */
       --accent-blue: #00d2ff;      /* Electric cyan glow accent */
       --border-color: #1e293b;     /* Dark subtle borders */
+      --radius-pill: 9999px;
     }
 
     html, body {
@@ -21,7 +22,7 @@
       margin: 0;
       padding: 10px 16px;
       height: 100vh;
-      overflow: hidden;
+      overflow-y: auto;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -35,6 +36,7 @@
       margin: 0 auto; 
       display: flex;
       flex-direction: column;
+      padding-bottom: 20px;
     }
 
     .setup-title { 
@@ -161,6 +163,34 @@
       background: #38bdf8;
       box-shadow: 0 0 25px rgba(0, 210, 255, 0.7);
     }
+
+    /* SLEEK APP-STYLED BACK BUTTON */
+    .btn-app-back {
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-color);
+      background: #050b14;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-app-back:hover {
+      border-color: var(--accent-blue);
+      color: var(--text-main);
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -216,6 +246,11 @@
       </div>
 
       <button id="start-game-btn">Start Game as Host</button>
+
+      <!-- Back to Wix Site Button -->
+      <button onclick="window.location.href='https://thesportvolt.wixsite.com/sport-volt'" class="btn-app-back">
+        ← Back to Sport Volt
+      </button>
     </div>
   </div>
 
