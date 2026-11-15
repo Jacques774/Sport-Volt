@@ -20,46 +20,49 @@
       background-color: var(--bg-primary);
       color: var(--text-main);
       margin: 0;
-      padding: 8px 16px;
+      padding: 6px 12px;
       height: 100vh;
-      overflow: hidden; /* Locks scrolling */
+      width: 100vw;
+      overflow: hidden; /* Strict lock against scrolling */
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      position: fixed; /* Prevents mobile rubber-band scrolling */
     }
 
     .setup-container { 
       width: 100%;
-      max-width: 500px; 
+      max-width: 480px; 
       margin: 0 auto; 
       display: flex;
       flex-direction: column;
+      max-height: 100vh;
     }
 
     .setup-title { 
       text-align: center; 
-      font-size: 1.4rem; 
+      font-size: 1.25rem; 
       font-weight: 700; 
-      margin: 0 0 8px 0; 
+      margin: 0 0 6px 0; 
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
     .setup-card { 
       background-color: var(--bg-card); 
-      border-radius: 14px; 
-      padding: 14px 18px; 
+      border-radius: 12px; 
+      padding: 12px 16px; 
       border: 1px solid var(--border-color); 
       display: flex; 
       flex-direction: column; 
-      gap: 8px; 
+      gap: 6px; 
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
 
     .setup-card label { 
-      font-size: 0.78rem; 
+      font-size: 0.73rem; 
       font-weight: 700; 
       color: var(--text-muted); 
       text-transform: uppercase;
@@ -67,12 +70,12 @@
     }
 
     .setup-card input, .setup-card select { 
-      padding: 9px 12px; 
-      border-radius: 10px; 
+      padding: 8px 10px; 
+      border-radius: 8px; 
       border: 1px solid var(--border-color); 
       background: #050b14; 
       color: var(--text-main); 
-      font-size: 0.95rem; 
+      font-size: 0.9rem; 
       outline: none;
       transition: border-color 0.3s;
     }
@@ -83,15 +86,15 @@
     }
 
     #create-game-btn { 
-      padding: 11px; 
+      padding: 10px; 
       border-radius: 30px; 
       border: 1px solid var(--accent-blue); 
       background: transparent; 
       color: var(--text-main); 
-      font-size: 0.95rem; 
+      font-size: 0.9rem; 
       font-weight: bold; 
       cursor: pointer; 
-      margin-top: 4px; 
+      margin-top: 2px; 
       text-transform: uppercase;
       letter-spacing: 0.5px;
       box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
@@ -104,31 +107,31 @@
     }
 
     .readonly-field { 
-      padding: 8px; 
-      border-radius: 10px; 
+      padding: 6px; 
+      border-radius: 8px; 
       background: #050b14; 
       color: var(--accent-blue); 
-      font-size: 0.9rem; 
+      font-size: 0.85rem; 
       border: 1px solid var(--border-color); 
       word-break: break-all; 
     }
 
     .code-box { 
-      font-size: 1.4rem; 
+      font-size: 1.2rem; 
       font-weight: 800; 
-      letter-spacing: 3px; 
+      letter-spacing: 2px; 
       text-align: center; 
       color: var(--accent-blue); 
       background: #050b14; 
       border: 2px dashed var(--accent-blue); 
-      padding: 8px; 
-      border-radius: 12px;
+      padding: 6px; 
+      border-radius: 10px;
       text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
     }
 
     .share-btn { 
-      padding: 9px; 
-      border-radius: 10px; 
+      padding: 8px; 
+      border-radius: 8px; 
       border: 1px solid var(--accent-blue); 
       background: rgba(0, 210, 255, 0.1); 
       color: var(--accent-blue); 
@@ -144,15 +147,15 @@
     }
 
     #start-game-btn { 
-      padding: 11px; 
+      padding: 10px; 
       border-radius: 30px; 
       border: none; 
       background: var(--accent-blue); 
       color: #000; 
-      font-size: 0.95rem; 
+      font-size: 0.9rem; 
       font-weight: bold; 
       cursor: pointer; 
-      margin-top: 4px; 
+      margin-top: 2px; 
       display: none; 
       text-transform: uppercase;
       box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
@@ -166,17 +169,17 @@
     /* SLEEK APP-STYLED BACK BUTTON */
     .btn-app-back {
       width: 100%;
-      padding: 10px;
+      padding: 9px;
       border-radius: var(--radius-pill);
       border: 1px solid var(--border-color);
       background: #050b14;
       color: var(--text-muted);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 4px;
       transition: all 0.25s ease;
       display: flex;
       align-items: center;
@@ -216,7 +219,7 @@
       </select>
 
       <!-- Dynamic Custom Folder Dropdown (Appears only when 'custom' is selected) -->
-      <div id="customFolderContainer" style="display: none; flex-direction: column; gap: 4px;">
+      <div id="customFolderContainer" style="display: none; flex-direction: column; gap: 3px;">
         <label>Select Custom List</label>
         <select id="custom-folder-select">
           <!-- Populated from localStorage -->
@@ -229,11 +232,11 @@
       <label>How Many Questions (Max 20)</label>
       <input type="number" id="question-count" min="1" max="20" value="20" placeholder="20">
 
-      <div id="setupError" style="color:#ef4444; font-weight:600; display:none; font-size:0.85rem;"></div>
+      <div id="setupError" style="color:#ef4444; font-weight:600; display:none; font-size:0.8rem;"></div>
       
       <button id="create-game-btn">Create Game</button>
       
-      <div id="generatedLinkBox" style="display:none; margin-top:4px; flex-direction:column; gap:4px;">
+      <div id="generatedLinkBox" style="display:none; margin-top:2px; flex-direction:column; gap:3px;">
         <div style="display: none;">
           <label>Players Join Link</label>
           <div class="readonly-field" id="generated-link"></div>
