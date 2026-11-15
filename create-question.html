@@ -288,6 +288,16 @@
       text-transform: uppercase;
     }
 
+    .inline-error {
+      color: var(--no-red);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 6px;
+      display: none;
+      text-align: center;
+    }
+
     /* CUSTOM YES/NO CONFIRMATION MODAL */
     #customConfirmModal {
       display: none;
@@ -391,7 +401,8 @@
       </button>
     </div>
 
-    <!-- Updated sleek app-styled back button pointing to your Wix website -->
+    <div id="menuError" class="inline-error"></div>
+
     <button onclick="window.location.href='https://thesportvolt.wixsite.com/sport-volt'" class="btn-app-back">
       ← Back to Sport Volt
     </button>
@@ -403,6 +414,7 @@
       <label for="newListName">List / Folder Name</label>
       <input type="text" id="newListName" placeholder="e.g. Six Nations Derby">
     </div>
+    <div id="createError" class="inline-error"></div>
 
     <button onclick="confirmCreateList()" class="btn-action">Continue to Add Questions →</button>
     <button onclick="goToMenu()" class="btn-secondary">Cancel</button>
@@ -440,6 +452,8 @@
       <label for="qTimer">Timer Duration (Seconds)</label>
       <input type="number" id="qTimer" value="180" min="30" max="600">
     </div>
+    
+    <div id="workspaceError" class="inline-error"></div>
 
     <button onclick="addQuestionToActiveList()" class="btn-action btn-add-q">+ Add Question to List</button>
     <div id="addToast" class="toast-msg">Question Added! 🎉</div>
@@ -481,6 +495,11 @@
   function showStep(stepId) {
     document.querySelectorAll('.step-view').forEach(el => el.classList.remove('active'));
     document.getElementById(stepId).classList.add('active');
+    // Clear any active error messages when switching steps
+    document.querySelectorAll('.inline-error').forEach(el => {
+      el.style.display = 'none';
+      el.textContent = '';
+    });
   }
 
   function goToMenu() {
@@ -521,7 +540,9 @@
     select.innerHTML = "";
 
     if (keys.length === 0) {
-      alert("No custom lists exist yet. Create one first!");
+      const errEl = document.getElementById("menuError");
+      errEl.textContent = "No custom lists exist yet. Create one first!";
+      errEl.style.display = "block";
       return;
     }
 
@@ -540,7 +561,13 @@
   // STEP 2 CONFIRMS
   function confirmCreateList() {
     const name = document.getElementById("newListName").value.trim();
-    if (!name) return alert("Please enter a list name.");
+    const errEl = document.getElementById("createError");
+    
+    if (!name) {
+      errEl.textContent = "Please enter a list name.";
+      errEl.style.display = "block";
+      return;
+    }
 
     const lists = getLists();
     if (!lists[name]) {
@@ -597,8 +624,14 @@
   function addQuestionToActiveList() {
     const text = document.getElementById("qText").value.trim();
     const timer = Number(document.getElementById("qTimer").value) || 180;
+    const errEl = document.getElementById("workspaceError");
 
-    if (!text) return alert("Please enter question text.");
+    if (!text) {
+      errEl.textContent = "Please enter question text.";
+      errEl.style.display = "block";
+      return;
+    }
+    errEl.style.display = "none";
 
     const lists = getLists();
     if (!lists[currentActiveListName]) lists[currentActiveListName] = [];
