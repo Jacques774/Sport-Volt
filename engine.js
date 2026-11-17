@@ -424,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (window.pot && typeof window.pot.startStakeTimer === "function") {
         window.pot.startStakeTimer(
-          10000,
+          20000, // Updated to 20 seconds (20000ms)
           (timeLeft) => window.showCountdown(timeLeft),
           (amount) => {
             window.revealPot(amount);
@@ -600,7 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.startPostQuestionCountdown(() => {
         if (window.pot) {
           window.pot.startStakeTimer(
-            10000,
+            20000, // Updated to 20 seconds (20000ms)
             (timeLeft) => window.showCountdown(timeLeft),
             (amount) => {
               window.revealPot(amount);
