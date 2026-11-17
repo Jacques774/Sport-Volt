@@ -288,14 +288,17 @@
   <div class="setup-container">
     <h1 class="setup-title">Game Setup</h1>
     <div class="setup-card">
-      <label>Sport Type</label>
-      <div class="custom-select-wrapper" id="sport-select-wrapper">
-        <div class="custom-select" data-value="rugby">Rugby</div>
-        <div class="custom-options">
-          <div class="custom-option" data-value="football">Football</div>
-          <div class="custom-option selected" data-value="rugby">Rugby</div>
-          <div class="custom-option" data-value="basketball">Basketball</div>
-          <div class="custom-option" data-value="tennis">Tennis</div>
+      <!-- Sport Type Temporarily Hidden & Locked to Rugby -->
+      <div style="display: none;">
+        <label>Sport Type</label>
+        <div class="custom-select-wrapper" id="sport-select-wrapper">
+          <div class="custom-select" data-value="rugby">Rugby</div>
+          <div class="custom-options">
+            <div class="custom-option" data-value="football">Football</div>
+            <div class="custom-option selected" data-value="rugby">Rugby</div>
+            <div class="custom-option" data-value="basketball">Basketball</div>
+            <div class="custom-option" data-value="tennis">Tennis</div>
+          </div>
         </div>
       </div>
       <input type="hidden" id="sport-type" value="rugby">
@@ -307,7 +310,7 @@
         <div class="custom-options" id="mode-options-list">
           <div class="custom-option selected" data-value="blitz">Blitz (Fast Events: 2m - 4m)</div>
           <div class="custom-option" data-value="tactical">Tactical (Macro Trends: 5m - 10m)</div>
-          <div class="custom-option" data-value="mix">Mix (Combined Blitz & Tactical Deck)</div>
+          <div class="custom-option" data-value="mix">Mix (Combined Blitz & Tactical)</div>
           <div class="custom-option" data-value="custom" id="custom-mode-option" style="display: none;">Custom Deck (Saved Lists)</div>
         </div>
       </div>
@@ -394,7 +397,7 @@
           optionsBox.classList.remove('open');
 
           // Trigger change event if game mode changes
-          if (hiddenInput.id === 'game-mode') {
+          if (hiddenInput && hiddenInput.id === 'game-mode') {
             handleGameModeChange();
           }
         });
@@ -413,10 +416,12 @@
     const customOption = document.getElementById("custom-mode-option");
     const keys = Object.keys(allLists);
 
-    if (keys.length > 0) {
-      customOption.style.display = "block";
-    } else {
-      customOption.style.display = "none";
+    if (customOption) {
+      if (keys.length > 0) {
+        customOption.style.display = "block";
+      } else {
+        customOption.style.display = "none";
+      }
     }
   }
 
@@ -426,6 +431,8 @@
     const hiddenInput = document.getElementById("custom-folder-select");
     
     const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
+    if (!optionsContainer || !selectBox || !hiddenInput) return;
+    
     optionsContainer.innerHTML = "";
 
     const keys = Object.keys(allLists);
@@ -460,10 +467,12 @@
   }
 
   function handleGameModeChange() {
-    const mode = document.getElementById("game-mode").value;
+    const modeInput = document.getElementById("game-mode");
     const folderContainer = document.getElementById("customFolderContainer");
     
-    if (mode === "custom") {
+    if (!modeInput || !folderContainer) return;
+    
+    if (modeInput.value === "custom") {
       folderContainer.style.display = "flex";
       loadCustomFoldersDropdowns();
     } else {
@@ -499,7 +508,7 @@
     const BASE_URL = "https://prediction-backend-2e20.onrender.com";
 
     createBtn.addEventListener("click", () => {
-      const sport = document.getElementById("sport-type").value;
+      const sport = document.getElementById("sport-type").value; // Always "rugby"
       const gameMode = document.getElementById("game-mode").value; 
       const startingBalance = Number(balanceInput.value);
       const questionCount = Number(document.getElementById("question-count").value);
