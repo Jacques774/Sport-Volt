@@ -111,6 +111,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const stakeCancelBtn = document.getElementById("stake-cancel-btn");
 
   // ============================
+  // CUSTOM ALERT HELPER (REPLACES NATIVE ALERT)
+  // ============================
+  function showAppAlert(message) {
+    const modal = document.getElementById("custom-alert-modal");
+    const msgEl = document.getElementById("custom-alert-message");
+    const okBtn = document.getElementById("custom-alert-ok");
+
+    if (!modal || !msgEl || !okBtn) {
+      alert(message); // Fallback if modal isn't rendered yet
+      return;
+    }
+
+    msgEl.textContent = message;
+    modal.style.display = "flex";
+
+    const closeAlert = () => {
+      modal.style.display = "none";
+      okBtn.onclick = null;
+    };
+    okBtn.onclick = closeAlert;
+  }
+
+  // ============================
   // PLAYER RESOLUTION HELPERS
   // ============================
   function getActivePlayerName() {
@@ -704,20 +727,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const amount = Number(currentStakeValue || stakeInput?.value);
 
       if (isNaN(amount) || amount <= 0) {
-        alert("Enter a valid stake amount.");
+        showAppAlert("Enter a valid stake amount.");
         return;
       }
 
       const player = getActivePlayerName();
 
       if (window.pot && window.pot.balances[player] !== undefined && amount > window.pot.balances[player]) {
-        alert("Not enough balance for this stake.");
+        showAppAlert("Not enough balance for this stake.");
         return;
       }
 
       const q = Engine.currentQuestion;
       if (!q) {
-        alert("No active question found.");
+        showAppAlert("No active question found.");
         return;
       }
 
