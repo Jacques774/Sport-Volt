@@ -85,6 +85,21 @@
       box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
     }
 
+    /* LOCKED STATIC FIELD (Replaces Sport Dropdown) */
+    .locked-field {
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: #050b14;
+      color: var(--accent-blue);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
     /* CUSTOM APP-THEMED DROPDOWN STYLING */
     .custom-select-wrapper {
       position: relative;
@@ -288,18 +303,10 @@
   <div class="setup-container">
     <h1 class="setup-title">Game Setup</h1>
     <div class="setup-card">
-      <!-- Sport Type Temporarily Hidden & Locked to Rugby -->
-      <div style="display: none;">
-        <label>Sport Type</label>
-        <div class="custom-select-wrapper" id="sport-select-wrapper">
-          <div class="custom-select" data-value="rugby">Rugby</div>
-          <div class="custom-options">
-            <div class="custom-option" data-value="football">Football</div>
-            <div class="custom-option selected" data-value="rugby">Rugby</div>
-            <div class="custom-option" data-value="basketball">Basketball</div>
-            <div class="custom-option" data-value="tennis">Tennis</div>
-          </div>
-        </div>
+      <!-- Sport Type (Locked static display) -->
+      <label>Sport Type</label>
+      <div class="locked-field">
+        <span>Rugby</span>
       </div>
       <input type="hidden" id="sport-type" value="rugby">
 
@@ -359,7 +366,7 @@
   </div>
 
 <script>
-  // Setup custom dropdown interactivity
+  // Setup custom dropdown interactivity for remaining dropdowns
   function setupCustomDropdowns() {
     document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
       const selectBox = wrapper.querySelector('.custom-select');
