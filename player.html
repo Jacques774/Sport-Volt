@@ -271,6 +271,16 @@
 
 </div>
 
+<!-- ============================
+     CUSTOM APP ALERT MODAL
+     ============================ -->
+<div id="custom-alert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(5, 11, 20, 0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box; backdrop-filter: blur(4px);">
+  <div style="background: #0d1726; border: 1px solid #00d2ff; border-radius: 16px; padding: 20px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
+    <p id="custom-alert-message" style="color: #ffffff; font-size: 0.95rem; margin: 0 0 20px 0; font-weight: 600; line-height: 1.4;"></p>
+    <button id="custom-alert-ok" style="width: 100%; padding: 11px; border-radius: 30px; border: none; background: #00d2ff; color: #000; font-size: 0.9rem; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);">OK</button>
+  </div>
+</div>
+
 <!-- Load Socket.IO client first -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
