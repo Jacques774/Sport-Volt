@@ -633,7 +633,12 @@ document.addEventListener("DOMContentLoaded", () => {
     clearInterval(questionCountdown);
     clearInterval(cashoutCountdown);
     clearInterval(stakeTimerInterval);
-    triggerGameOver();
+    
+    // Save current balance and redirect to main menu
+    localStorage.setItem("user_credit", balance.toFixed(2));
+    console.log(`⚡ Ending game. Returning to Main Menu with balance: ${balance.toFixed(2)}⚡`);
+    
+    window.location.href = "MainMenu.html";
   };
 
   if (logoutBtn) {
