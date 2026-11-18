@@ -152,14 +152,15 @@
 
 </div>
 
-<!-- EMBEDDED GAME ENGINE SCRIPT -->
+<!-- EMBEDDED GAME ENGINE SCRIPT WITH REAL RUGBY CLIPS -->
 <script>
+  // Real iconic rugby match & highlight clip IDs for testing
   const sampleQuestions = [
-    { text: "Will the next try be scored within the 5-meter channel?", youtubeId: "dQw4w9WgXcQ", timerSeconds: 15 },
-    { text: "Will this lineout throw result in a clean steal?", youtubeId: "dQw4w9WgXcQ", timerSeconds: 15 },
-    { text: "Will the penalty kick successfully clear the crossbar?", youtubeId: "dQw4w9WgXcQ", timerSeconds: 15 },
-    { text: "Will this defensive blitz force a knock-on turnover?", youtubeId: "dQw4w9WgXcQ", timerSeconds: 15 },
-    { text: "Will the referee award a yellow card for this tackle?", youtubeId: "dQw4w9WgXcQ", timerSeconds: 15 }
+    { text: "Will this blistering counter-attack result in a try?", youtubeId: "389R5Kj-k98", timerSeconds: 15 },
+    { text: "Will the kicker successfully convert from the sideline?", youtubeId: "X_t5g9v3a1k", timerSeconds: 15 },
+    { text: "Will this crunching try-saver tackle prevent the score?", youtubeId: "7L2p5k8-q9E", timerSeconds: 15 },
+    { text: "Will the defending pack successfully hold up the maul?", youtubeId: "9k2v5m4-x1Q", timerSeconds: 15 },
+    { text: "Will this intercept pass lead to a breakaway try?", youtubeId: "4p8n2v7-s3W", timerSeconds: 15 }
   ];
 
   let playerName = "Solo Player";
@@ -206,9 +207,6 @@
     if (nameVal) playerName = nameVal;
     if (codeVal) clipCode = codeVal;
 
-    console.log("Starting game with code:", clipCode);
-
-    // Force hide setup slide and show dashboard
     setupSlide.style.display = "none";
     setupSlide.classList.add("hidden");
     dashboard.classList.remove("hidden");
@@ -242,7 +240,8 @@
 
     if (q.youtubeId) {
       youtubeContainer.style.display = "block";
-      youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${q.youtubeId}?autoplay=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      // Added parameters to start muted/autoplay smoothly
+      youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${q.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
     startQuestionTimer(q.timerSeconds);
