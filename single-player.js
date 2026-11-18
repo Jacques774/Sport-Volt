@@ -1,7 +1,7 @@
 import { RugbyBlitzQuestions } from './RugbyQuestions-blitz.js';
 
-// Game State
 let playerName = "Solo Player";
+let clipCode = "";
 let balance = 50.00;
 let currentQuestionIndex = 0;
 let totalQuestions = 20;
@@ -13,6 +13,7 @@ let timerInterval = null;
 const setupSlide = document.getElementById("playerSetupSlide");
 const dashboard = document.getElementById("dashboard");
 const playerNameInput = document.getElementById("player-name-input");
+const clipCodeInput = document.getElementById("clip-code-input");
 const startSoloBtn = document.getElementById("start-solo-btn");
 
 const playerNameEl = document.getElementById("player-name");
@@ -24,7 +25,6 @@ const timerEl = document.getElementById("timer");
 
 const btnYes = document.getElementById("btn-yes");
 const btnNo = document.getElementById("btn-no");
-const cashoutBtn = document.getElementById("cashout-btn");
 
 // YouTube Container Elements
 const youtubeContainer = document.getElementById("youtubeContainer");
@@ -43,10 +43,15 @@ const gameOverMessage = document.getElementById("gameOverMessage");
 const gameOverFinalBalance = document.getElementById("gameOverFinalBalance");
 const logoutBtn = document.getElementById("logout-btn");
 
-// Initialize Single Player Flow
+// Initialize Single Player Flow on Button Click
 startSoloBtn.addEventListener("click", () => {
   const nameVal = playerNameInput.value.trim();
+  const codeVal = clipCodeInput ? clipCodeInput.value.trim().toUpperCase() : "";
+
   if (nameVal) playerName = nameVal;
+  clipCode = codeVal;
+
+  console.log(`Starting Single Player for ${playerName} | Clip Code: ${clipCode || 'DEFAULT'}`);
 
   setupSlide.classList.add("hidden");
   dashboard.classList.remove("hidden");
@@ -61,7 +66,7 @@ function updateBalanceDisplay() {
 }
 
 function loadQuestion(index) {
-  if (index >= RugbyBlitzQuestions.length || index >= totalQuestions) {
+  if (!RugbyBlitzQuestions || index >= RugbyBlitzQuestions.length || index >= totalQuestions) {
     endGame();
     return;
   }
@@ -70,25 +75,26 @@ function loadQuestion(index) {
   const q = RugbyBlitzQuestions[index];
 
   questionTallyEl.textContent = `Question ${index + 1} of ${totalQuestions}`;
-  questionTextEl.textContent = q.text;
+  questionTextEl.textContent = q.text || `Will event #${index + 1} happen successfully?`;
   qInfoEl.innerHTML = `You chose: --<br>Stake: --<br>Timer: Active`;
 
-  // Reset choices visual state
+  // Reset button states
   btnYes.classList.remove("selected");
   btnNo.classList.remove("selected");
   selectedChoice = null;
   currentStake = 0;
 
-  // Handle YouTube Video Clip Integration
+  // Handle YouTube Video Clip Loading
   if (q.youtubeId) {
     youtubeContainer.style.display = "block";
     youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${q.youtubeId}?autoplay=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
   } else {
-    youtubeContainer.style.display = "none";
-    youtubePlayer.innerHTML = "";
+    // Fallback test video if question doesn't have an ID yet
+    youtubeContainer.style.display = "block";
+    youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
   }
 
-  startQuestionTimer(q.timerSeconds || 10);
+  startQuestionTimer(q.timerSeconds || 15);
 }
 
 function startQuestionTimer(duration) {
@@ -102,13 +108,12 @@ function startQuestionTimer(duration) {
 
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
-      // Auto-resolve question outcome for solo mode simulation
       resolveSoloQuestion();
     }
   }, 1000);
 }
 
-// Choice Click Triggers Stake Keypad
+// Choice Click Triggers Keypad Stake Popup
 btnYes.addEventListener("click", () => openStakePopup("YES"));
 btnNo.addEventListener("click", () => openStakePopup("NO"));
 
@@ -128,7 +133,7 @@ function openStakePopup(choice) {
   stakePopup.style.display = "flex";
 }
 
-// Keypad Input Logic
+// Keypad Input Logic (called from HTML onclick)
 window.pressKey = function(key) {
   let valStr = stakeInput.value || "0";
 
@@ -169,25 +174,25 @@ stakeSaveBtn.addEventListener("click", () => {
   stakePopup.style.display = "none";
 });
 
-// Resolve Solo Question & Move to Next
 function resolveSoloQuestion() {
   clearInterval(timerInterval);
 
-  // Simulated Solo Outcome (Random 50/50 win/loss for instant single-player pacing)
+  // Simulated outcome for solo mode testing
   const isWin = Math.random() > 0.5;
 
   if (currentStake > 0) {
     if (isWin) {
       const payout = currentStake * 2;
       balance += payout;
-      showAlert(`Question ${currentQuestionIndex + 1} Result: WIN! +${payout}⚡`);
+      showAlert(`Result: WIN! +${payout}⚡`);
     } else {
-      showAlert(`Question ${currentQuestionIndex + 1} Result: LOSS. Better luck next time!`);
+      showAlert(`Result: LOSS. Better luck next question!`);
     }
     updateBalanceDisplay();
+  } else {
+    showAlert(`Time up! No stake placed.`);
   }
 
-  // Advance to next question after brief pause
   setTimeout(() => {
     loadQuestion(currentQuestionIndex + 1);
   }, 1500);
@@ -208,7 +213,6 @@ logoutBtn.addEventListener("click", () => {
 });
 
 function showAlert(msg) {
-  // Uses your existing custom alert modal if present, or fallback
   const alertModal = document.getElementById("custom-alert-modal");
   const alertMsg = document.getElementById("custom-alert-message");
   const alertOk = document.getElementById("custom-alert-ok");
