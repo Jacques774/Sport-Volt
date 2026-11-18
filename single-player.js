@@ -26,15 +26,15 @@ const SoloQuestionPicker = {
   }
 };
 
-// 🔑 TIMER FORMATTER: Converts total seconds into "Xm Ys" format
+// 🔑 TIMER FORMATTER: Converts total seconds into minutes display
 function formatTime(totalSeconds) {
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  
-  if (mins > 0) {
-    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const minutes = safeSeconds / 60;
+
+  if (Number.isInteger(minutes)) {
+    return `${minutes}m`;
   }
-  return `${secs}s`;
+  return `${minutes.toFixed(1)}m`;
 }
 
 /*******************************
@@ -344,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (activeQ && activeQ.stake > 0 && !activeQ.cashedOut) {
           startCashoutTimer(Math.floor(activeQ.timer / 2));
         } else if (timerEl) {
-          timerEl.textContent = "Cash out: --s";
+          timerEl.textContent = "Cash out: --m";
         }
       });
     },
@@ -415,14 +415,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (potEl) potEl.style.display = "none";
     if (stakeEl) {
       stakeEl.style.display = "inline";
-      stakeEl.textContent = `Stake window: ${duration}s`;
+      stakeEl.textContent = `Stake window: ${formatTime(duration)}`;
     }
 
     let timeLeft = duration;
     clearInterval(stakeTimerInterval);
     stakeTimerInterval = setInterval(() => {
       timeLeft--;
-      if (stakeEl) stakeEl.textContent = `Stake window: ${timeLeft}s`;
+      if (stakeEl) stakeEl.textContent = `Stake window: ${formatTime(timeLeft)}`;
 
       if (timeLeft <= 0) {
         clearInterval(stakeTimerInterval);
