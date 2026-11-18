@@ -44,6 +44,83 @@
       box-sizing: border-box;
       box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
     }
+
+    /* ============================
+       HISTORY PANEL STYLES
+       ============================ */
+    .history-panel {
+      position: fixed;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      height: 75vh;
+      background: var(--bg-card, #0f172a);
+      border-top: 2px solid var(--border-color, #1e293b);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
+      transition: bottom 0.3s ease-in-out;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      padding: 20px;
+    }
+    .history-panel.active {
+      bottom: 0;
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border-color, #1e293b);
+      padding-bottom: 10px;
+    }
+    .history-header h3 {
+      color: #fff;
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    .history-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted, #94a3b8);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+    .history-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color, #1e293b);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .history-card.outcome-yes { border-left: 4px solid var(--yes-green, #22c55e); }
+    .history-card.outcome-no { border-left: 4px solid var(--no-red, #ef4444); }
+    .history-card.outcome-cash { border-left: 4px solid #f59e0b; }
+
+    .history-question { color: #fff; font-size: 0.95rem; font-weight: 600; }
+    .history-outcome-text { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; }
+    .outcome-yes .history-outcome-text { color: var(--yes-green, #22c55e); }
+    .outcome-no .history-outcome-text { color: var(--no-red, #ef4444); }
+    .outcome-cash .history-outcome-text { color: #f59e0b; }
+
+    .history-balance { font-size: 0.9rem; color: #cbd5e1; }
+    .history-time { font-size: 0.75rem; color: #64748b; }
+    .profit-pos { color: var(--yes-green, #22c55e); font-weight: 700; }
+    .profit-neg { color: var(--no-red, #ef4444); font-weight: 700; }
+    .profit-zero { color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -114,12 +191,26 @@
       </div>
     </div>
 
-    <!-- ⏱️ STAKE WINDOW TIMER BADGE (Outside & Below Card) -->
+    <!-- ⏱️ STAKE WINDOW TIMER BADGE -->
     <div id="stakeCountdown" class="stake-countdown-badge" style="display: block !important;">Stake window: 20s</div>
   </div>
 
   <div class="bottom-buttons">
-    <button class="nav-btn" onclick="alert('History panel coming soon!')">History</button>
+    <button class="nav-btn" onclick="openHistory()">History</button>
+  </div>
+
+  <!-- ============================
+       HISTORY SLIDE-UP PANEL
+       ============================ -->
+  <div id="historyPanel" class="history-panel">
+    <div class="history-header">
+      <h3>Round History</h3>
+      <button class="history-close-btn" onclick="closeHistory()">&times;</button>
+    </div>
+    <div class="history-list">
+      <!-- Dynamically populated history entries -->
+      <div style="color: #64748b; text-align: center; margin-top: 30px;">No rounds played yet.</div>
+    </div>
   </div>
 
   <!-- ============================
@@ -194,6 +285,99 @@
     }
   };
 
+  /*******************************
+   * HISTORY MODULE
+   *******************************/
+  window.History = {
+    items: [],
+
+    push(entry) {
+      entry.timestamp = new Date();
+      entry.oldBalance = Number(entry.oldBalance || 0);
+      entry.newBalance = Number(entry.newBalance || entry.oldBalance);
+      this.items.push(entry);
+      this.render();
+    },
+
+    formatProfit(entry) {
+      const oldBal = typeof entry.oldBalance === "number" ? entry.oldBalance : 0;
+      const newBal = typeof entry.newBalance === "number" ? entry.newBalance : 0;
+      const profit = newBal - oldBal;
+
+      if (profit > 0) return `<span class="profit-pos">(+${profit.toFixed(2)}⚡)</span>`;
+      if (profit < 0) return `<span class="profit-neg">(-${Math.abs(profit).toFixed(2)}⚡)</span>`;
+      return `<span class="profit-zero">(0⚡)</span>`;
+    },
+
+    formatTime(date) {
+      const validDate = date instanceof Date ? date : new Date();
+      const d = validDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      const t = validDate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      return `${d} • ${t}`;
+    },
+
+    outcomeClass(entry) {
+      if (entry.cashedOut) return "outcome-cash";
+      if (entry.userChoice === entry.outcome) return "outcome-yes";
+      return "outcome-no";
+    },
+
+    outcomeText(entry) {
+      if (entry.cashedOut) return "CASHED OUT";
+      if (entry.outcome === "YES") return "YES ✔";
+      if (entry.outcome === "NO") return "NO ✘";
+      return entry.outcome || "--";
+    },
+
+    render() {
+      const container = document.querySelector(".history-list");
+      if (!container) return;
+
+      if (this.items.length === 0) {
+        container.innerHTML = `<div style="color: #64748b; text-align: center; margin-top: 30px;">No rounds played yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = this.items
+        .slice()
+        .reverse()
+        .map(entry => {
+          const oldBal = typeof entry.oldBalance === "number" ? entry.oldBalance : 0;
+          const newBal = typeof entry.newBalance === "number" ? entry.newBalance : oldBal;
+
+          return `
+            <div class="history-card ${this.outcomeClass(entry)}">
+              <div class="history-question">${entry.text || "Unknown question"}</div>
+              <div class="history-outcome-text">${this.outcomeText(entry)}</div>
+              <div class="history-balance">
+                ${oldBal.toFixed(2)}⚡ → ${newBal.toFixed(2)}⚡
+                ${this.formatProfit(entry)}
+              </div>
+              <div class="history-time">${this.formatTime(entry.timestamp)}</div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+  };
+
+  window.openHistory = function () {
+    const panel = document.getElementById("historyPanel");
+    if (panel) {
+      panel.classList.add("active");
+      if (window.History && typeof window.History.render === "function") {
+        window.History.render();
+      }
+    }
+  };
+
+  window.closeHistory = function () {
+    const panel = document.getElementById("historyPanel");
+    if (panel) {
+      panel.classList.remove("active");
+    }
+  };
+
   let playerName = "Solo Player";
   let balance = 50.00;
   let currentQuestionIndex = 0;
@@ -240,6 +424,7 @@
   let currentQuestionData = null;
   let currentStake = 0;
   let selectedChoice = null;
+  let roundStartBalance = 50.00;
 
   startSoloBtn.onclick = function() {
     const nameVal = playerNameInput.value.trim();
@@ -266,6 +451,8 @@
 
     currentQuestionData = SoloQuestionPicker.getRand();
     currentQuestionIndex++;
+
+    roundStartBalance = balance;
 
     questionTallyEl.textContent = `Question ${currentQuestionIndex} of ${SinglePlayerQuestions.length}`;
     questionTextEl.textContent = currentQuestionData.text;
@@ -420,7 +607,7 @@
     startCashoutTimer(Math.floor((currentQuestionData.timer || 90) / 2));
   };
 
-    cashoutBtn.onclick = () => {
+  cashoutBtn.onclick = () => {
     if (currentStake <= 0) return;
 
     clearInterval(cashoutCountdown);
@@ -435,6 +622,16 @@
     timerEl.textContent = "Cashed Out";
     qInfoEl.innerHTML += `<br><span style="color: #f59e0b;">Cashed out +${refund.toFixed(2)}⚡</span>`;
 
+    // Push to History
+    window.History.push({
+      text: currentQuestionData.text,
+      userChoice: selectedChoice,
+      outcome: "--",
+      cashedOut: true,
+      oldBalance: roundStartBalance,
+      newBalance: balance
+    });
+
     setTimeout(() => {
       loadQuestion();
     }, 1500);
@@ -447,7 +644,8 @@
     const badgeEl = document.getElementById("stakeCountdown");
     if (badgeEl) badgeEl.style.setProperty("display", "none", "important");
 
-    const isWin = Math.random() > 0.5;
+    const outcome = Math.random() > 0.5 ? "YES" : "NO";
+    const isWin = (currentStake > 0 && selectedChoice === outcome);
 
     if (currentStake > 0) {
       if (isWin) {
@@ -462,6 +660,18 @@
       updateBalanceDisplay();
     } else {
       alert(`Time up! No stake placed.`);
+    }
+
+    // Push to History (if a stake was placed and not already cashed out)
+    if (currentStake > 0) {
+      window.History.push({
+        text: currentQuestionData.text,
+        userChoice: selectedChoice,
+        outcome: outcome,
+        cashedOut: false,
+        oldBalance: roundStartBalance,
+        newBalance: balance
+      });
     }
 
     setTimeout(() => {
