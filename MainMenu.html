@@ -135,6 +135,7 @@
   </div>
 
   <h1>Main Menu</h1>
+  <a href="/single-player.html" id="single-player-btn" class="menu-btn">Single Player</a>
   <a href="/gamesetup.html" id="host-btn" class="menu-btn">Host Player</a>
   <a href="/player" class="menu-btn">Player</a>
 
@@ -155,6 +156,11 @@
     const creditEl = document.getElementById("user-credit");
     if (creditEl) {
       creditEl.textContent = userCredit.toFixed(2) + "⚡";
+    }
+
+    const singlePlayerBtn = document.getElementById("single-player-btn");
+    if (singlePlayerBtn) {
+      singlePlayerBtn.href = `/single-player.html?token=sportvolt_secure_pass&credit=${userCredit.toFixed(2)}`;
     }
 
     const hostBtn = document.getElementById("host-btn");
