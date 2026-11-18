@@ -587,6 +587,9 @@
 
         linkBox.style.display = "flex";
         startBtn.style.display = "block";
+        
+        // Hide the Create Game button once successfully generated
+        createBtn.style.display = "none";
       })
       .catch(err => {
         console.error("Error creating game:", err);
