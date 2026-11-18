@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sport Volt - Single Player</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* SLEEK APP-STYLED BACK BUTTON */
+    .btn-app-back {
+      width: 100%;
+      padding: 12px;
+      border-radius: 9999px;
+      border: 1px solid #1e2d4a;
+      background: #050b14;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-app-back:hover {
+      border-color: #00d2ff;
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* CUSTOM APP-THEMED KEYPAD STYLES */
+    .keypad-btn {
+      background: #050b14;
+      border: 1px solid #1e293b;
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 14px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .keypad-btn:active {
+      transform: scale(0.95);
+      background: rgba(0, 210, 255, 0.15);
+      border-color: #00d2ff;
+    }
+
+    /* YOUTUBE CLIP CONTAINER STYLES */
+    .youtube-container {
+      width: 100%;
+      background: #0d1726;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      display: none; /* Hidden by default until a video clip loads */
+    }
+    .youtube-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    }
+    .youtube-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SINGLE PLAYER SETUP SLIDE -->
+<div id="playerSetupSlide" class="player-details-slide">
+  <div class="details-content">
+    <h2>Single Player Mode</h2>
+
+    <label>Your Name</label>
+    <input type="text" id="player-name-input" placeholder="Enter your name" value="Solo Player">
+
+    <button id="start-solo-btn" style="margin-top: 15px;">Start Solo Game</button>
+
+    <!-- 🏠 Back to Wix Site Button -->
+    <button onclick="window.location.href='https://thesportvolt.wixsite.com/sport-volt'" class="btn-app-back">
+      ← Back to Sport Volt
+    </button>
+  </div>
+</div>
+
+<!-- SINGLE PLAYER DASHBOARD -->
+<div class="dashboard hidden" id="dashboard">
+  <div class="top-header">
+    <div class="header-left">
+      <div class="header-line" id="player-name">Player: Solo</div>
+      <div class="header-line" id="player-balance">Balance: 50.00⚡</div>
+
+      <div id="player-question-tally" style="font-size: 0.95rem; font-weight: 600; color: #38bdf8; margin-bottom: 8px;">
+        Question 1 of 20
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-line" id="player-wins">Wins: 0</div>
+      <div class="header-line" id="player-cashouts">Cash-outs: 0</div>
+    </div>
+  </div>
+
+  <!-- Countdown -->
+  <div id="preCountdown" style="display:none; font-size:4rem; font-weight:700; text-align:center; margin-top:40px;">3</div>
+
+  <!-- Post-Question Countdown -->
+  <div id="postQuestionCountdown" style="display:none; font-size:4rem; font-weight:700; text-align:center; margin-top:40px;">3</div>
+
+  <!-- Cards -->
+  <div class="cards">
+    <!-- 📺 YOUTUBE VIDEO CLIP CONTAINER -->
+    <div id="youtubeContainer" class="youtube-container">
+      <div class="youtube-wrapper">
+        <div id="youtubePlayer"></div>
+      </div>
+    </div>
+
+    <div class="card" id="active-card">
+      <div class="card-header">
+        <div class="question-text" id="q-text">Loading question...</div>
+      </div>
+      <div class="choices">
+        <button class="btn btn-yes" id="btn-yes">YES</button>
+        <button class="btn btn-no" id="btn-no">NO</button>
+      </div>
+
+      <div class="cashout-row">
+        <span class="position" id="q-info">
+          You chose: --<br>
+          Stake: --<br>
+          Timer: --
+        </span>
+        <div class="cashout-action">
+          <button class="cashout-btn" id="cashout-btn">Cash Out: --</button>
+          <div class="cashout-timer" id="timer">Cash out: --s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stakePotDisplay" style="font-size:1.5rem; margin-top:20px;">
+    <span id="stakeCountdown" style="display:none;">Stake window: 10s</span>
+    <span id="potAmount" style="display:none;">Pot: 0⚡</span>
+  </div>
+
+  <!-- Footer Buttons -->
+  <div class="bottom-buttons">
+    <button class="nav-btn" onclick="openHistory()">History</button>
+    <button class="nav-btn" onclick="openLeaderboard()">Leaderboard</button>
+  </div>
+
+  <!-- Panels -->
+  <div id="historyPanel" class="history-panel">
+    <div class="history-content">
+      <button class="close-btn" onclick="closeHistory()">Close</button>
+      <div class="history-header">History</div>
+      <div class="history-list"></div>
+    </div>
+  </div>
+
+  <div id="leaderboardPanel" class="history-panel">
+    <div class="leaderboard-content">
+      <button class="close-btn" onclick="closeLeaderboard()">Close</button>
+      <div class="leaderboard-title">Leaderboard</div>
+      <div id="leaderboard-list" class="leaderboard-list"></div>
+    </div>
+  </div>
+
+  <!-- ============================
+       STAKE POPUP WITH CUSTOM KEYPAD
+       ============================ -->
+  <div id="stakePopup" class="stake-popup" style="display: none; align-items: center; justify-content: center; background: rgba(5, 11, 20, 0.85); backdrop-filter: blur(4px);">
+    <div class="stake-popup-content" style="background: #0d1726; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; width: 100%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); text-align: center;">
+      <h3 style="color: #ffffff; margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.5px;">Place Stake</h3>
+      
+      <!-- Display screen for entered stake -->
+      <div id="stakeDisplay" style="background: #050b14; border: 2px solid #00d2ff; border-radius: 10px; color: #00d2ff; font-size: 1.8rem; font-weight: 800; padding: 10px; margin-bottom: 16px; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,210,255,0.3);">
+        0
+      </div>
+
+      <!-- Hidden input for engine data binding -->
+      <input type="hidden" id="stakeInput" value="">
+
+      <!-- Keypad Grid (1 to 9, C for Clear All, 0, ALL IN) -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;">
+        <button type="button" class="keypad-btn" onclick="pressKey('1')">1</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('2')">2</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('3')">3</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('4')">4</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('5')">5</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('6')">6</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('7')">7</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('8')">8</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('9')">9</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('C')" style="color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.95rem; font-weight: 800;">C</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('0')">0</button>
+        <button type="button" class="keypad-btn" onclick="pressKey('ALL_IN')" style="color: #f59e0b; border-color: rgba(245,158,11,0.4); font-size: 0.75rem; font-weight: 800;">ALL IN</button>
+      </div>
+
+      <div class="stake-popup-actions" style="display: flex; gap: 8px;">
+        <button id="stake-save-btn" style="flex: 1; background: #00d2ff; color: #000; font-weight: bold; padding: 11px; border-radius: 30px; border: none; cursor: pointer; text-transform: uppercase;">Place Stake</button>
+        <button id="stake-cancel-btn" style="flex: 1; background: transparent; color: #94a3b8; font-weight: bold; padding: 11px; border-radius: 30px; border: 1px solid #1e293b; cursor: pointer; text-transform: uppercase;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       GAME OVER POPUP MODAL
+       ============================ -->
+  <div id="gameOverModal" class="stake-popup" style="display: none; z-index: 2000;">
+    <div class="stake-popup-content" style="text-align: center; padding: 25px;">
+      <h2 id="gameOverTitle" style="color: #38bdf8; margin-bottom: 10px;">Game Complete!</h2>
+      <p id="gameOverMessage" style="font-size: 1.2rem; margin: 15px 0; font-weight: 600;">
+        Well done! 🎉
+      </p>
+      <p id="gameOverFinalBalance" style="font-size: 1.1rem; color: #4ade80; margin-bottom: 20px;">
+        Final Balance: 0.00⚡
+      </p>
+
+      <div class="stake-popup-actions" style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="document.getElementById('gameOverModal').style.display='none'; openLeaderboard();" style="background-color: #00d2ff; color: #000; padding: 10px 18px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase;">
+          View Leaderboard
+        </button>
+        <button id="logout-btn" style="background-color: #ef4444; color: white; padding: 10px 18px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase;">
+          Exit
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Load foundational scripts -->
+<script src="history.js"></script>
+<script src="leaderboard.js"></script>
+
+<!-- Solo game script runner -->
+<script type="module" src="single-player.js"></script>
+
+</body>
+</html>
