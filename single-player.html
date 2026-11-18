@@ -36,9 +36,12 @@
       padding: 6px 12px;
       border-radius: 8px;
       font-weight: 800;
-      font-size: 0.95rem;
-      margin-bottom: 10px;
-      display: inline-block;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 12px;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -90,8 +93,6 @@
 
     <div class="card" id="active-card">
       <div class="card-header">
-        <!-- ⏱️ STAKE WINDOW TIMER BADGE (Forced Visible ID) -->
-        <div id="stakeCountdown" class="stake-countdown-badge" style="display: inline-block !important;">Stake window: 5s</div>
         <div class="question-text" id="q-text">Loading question...</div>
       </div>
       <div class="choices">
@@ -110,6 +111,9 @@
           <div class="cashout-timer" id="timer">Cash out: --s</div>
         </div>
       </div>
+
+      <!-- ⏱️ STAKE WINDOW TIMER BADGE (Relocated Below Card) -->
+      <div id="stakeCountdown" class="stake-countdown-badge" style="display: block !important;">Stake window: 5s</div>
     </div>
   </div>
 
@@ -283,7 +287,7 @@
       youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentQuestionData.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
-    // Start 5-second Stake Window Timer with bulletproof element lookup
+    // Start 5-second Stake Window Timer
     startStakeWindow(5, () => {
       btnYes.disabled = true;
       btnNo.disabled = true;
@@ -295,13 +299,12 @@
     startQuestionTimer(currentQuestionData.timer || 15);
   }
 
-  // Bulletproof Stake Window Countdown Function
   function startStakeWindow(duration, onComplete) {
     let timeLeft = duration;
     const badgeEl = document.getElementById("stakeCountdown");
     
     if (badgeEl) {
-      badgeEl.style.setProperty("display", "inline-block", "important");
+      badgeEl.style.setProperty("display", "block", "important");
       badgeEl.textContent = `Stake window: ${timeLeft}s`;
     }
 
@@ -322,7 +325,6 @@
     }, 1000);
   }
 
-  // 1. Question Timer (Runs in #q-info)
   function startQuestionTimer(duration) {
     let timeLeft = duration;
     
@@ -342,7 +344,6 @@
     }, 1000);
   }
 
-  // 2. Cashout Button Timer (Runs in #timer element next to cash out button)
   function startCashoutTimer(duration) {
     let timeLeft = duration;
     timerEl.textContent = `Cash out: ${timeLeft}s`;
