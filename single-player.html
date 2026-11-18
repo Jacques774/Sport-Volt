@@ -5,6 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sport Volt - Single Player</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .youtube-container {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      display: none;
+    }
+    .youtube-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+    }
+    .youtube-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .stake-countdown-badge {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid #f59e0b;
+      color: #f59e0b;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 1rem;
+      text-align: center;
+      margin-top: 14px;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+    }
+  </style>
 </head>
 <body>
 
@@ -83,15 +123,15 @@
   </div>
 
   <!-- ============================
-       HISTORY SLIDE-UP PANEL
+       HISTORY FULL SCREEN PANEL
        ============================ -->
   <div id="historyPanel" class="history-panel">
-    <div class="history-header">
-      <h3>Round History</h3>
+    <div class="history-content">
       <button class="close-btn" onclick="closeHistory()">Close</button>
-    </div>
-    <div class="history-list">
-      <div style="color: #64748b; text-align: center; margin-top: 30px;">No rounds played yet.</div>
+      <div class="history-header">Round History</div>
+      <div class="history-list">
+        <div style="color: var(--text-muted); text-align: center; margin-top: 30px;">No rounds played yet.</div>
+      </div>
     </div>
   </div>
 
@@ -216,7 +256,7 @@
       if (!container) return;
 
       if (this.items.length === 0) {
-        container.innerHTML = `<div style="color: #64748b; text-align: center; margin-top: 30px;">No rounds played yet.</div>`;
+        container.innerHTML = `<div style="color: var(--text-muted); text-align: center; margin-top: 30px;">No rounds played yet.</div>`;
         return;
       }
 
