@@ -6,7 +6,6 @@
   <title>Sport Volt - Single Player</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Specific inline tweaks for layout elements unique to single player if needed */
     .youtube-container {
       width: 100%;
       background: var(--bg-card);
@@ -35,7 +34,7 @@
 <body>
 
 <!-- SINGLE PLAYER SETUP SLIDE -->
-<div id="playerSetupSlide" class="player-details-slide">
+<div id="playerSetupSlide" class="player-details-slide" style="display: flex;">
   <div class="details-content">
     <h2>Single Player Mode</h2>
 
@@ -43,9 +42,9 @@
     <input type="text" id="player-name-input" placeholder="Enter your name" value="Solo Player">
 
     <label>Clip / Deck Code</label>
-    <input type="text" id="clip-code-input" placeholder="Enter clip code (e.g. RUGBY24)">
+    <input type="text" id="clip-code-input" placeholder="Enter clip code" value="RUGBY24">
 
-    <button id="start-solo-btn">Start Solo Game</button>
+    <button id="start-solo-btn" type="button">Start Solo Game</button>
 
     <button onclick="window.location.href='https://thesportvolt.wixsite.com/sport-volt'" class="btn-app-back">
       ← Back to Sport Volt
@@ -60,7 +59,7 @@
       <div class="header-line" id="player-name">Player: Solo</div>
       <div class="header-line" id="player-balance">Balance: 50.00⚡</div>
       <div id="player-question-tally" style="font-size: 0.95rem; font-weight: 600; color: #38bdf8; margin-top: 4px;">
-        Question 1 of 20
+        Question 1 of 5
       </div>
     </div>
     <div class="header-right">
@@ -153,7 +152,7 @@
 
 </div>
 
-<!-- EMBEDDED SINGLE PLAYER SCRIPT -->
+<!-- EMBEDDED GAME ENGINE SCRIPT -->
 <script>
   const sampleQuestions = [
     { text: "Will the next try be scored within the 5-meter channel?", youtubeId: "dQw4w9WgXcQ", timerSeconds: 15 },
@@ -164,7 +163,7 @@
   ];
 
   let playerName = "Solo Player";
-  let clipCode = "";
+  let clipCode = "RUGBY24";
   let balance = 50.00;
   let currentQuestionIndex = 0;
   let selectedChoice = null;
@@ -200,20 +199,24 @@
   const gameOverMessage = document.getElementById("gameOverMessage");
   const gameOverFinalBalance = document.getElementById("gameOverFinalBalance");
 
-  startSoloBtn.addEventListener("click", () => {
+  startSoloBtn.onclick = function() {
     const nameVal = playerNameInput.value.trim();
     const codeVal = clipCodeInput.value.trim().toUpperCase();
 
     if (nameVal) playerName = nameVal;
-    clipCode = codeVal;
+    if (codeVal) clipCode = codeVal;
 
+    console.log("Starting game with code:", clipCode);
+
+    // Force hide setup slide and show dashboard
+    setupSlide.style.display = "none";
     setupSlide.classList.add("hidden");
     dashboard.classList.remove("hidden");
 
     playerNameEl.textContent = `Player: ${playerName}`;
     updateBalanceDisplay();
     loadQuestion(0);
-  });
+  };
 
   function updateBalanceDisplay() {
     playerBalanceEl.textContent = `Balance: ${balance.toFixed(2)}⚡`;
@@ -261,8 +264,8 @@
     }, 1000);
   }
 
-  btnYes.addEventListener("click", () => openStakePopup("YES"));
-  btnNo.addEventListener("click", () => openStakePopup("NO"));
+  btnYes.onclick = () => openStakePopup("YES");
+  btnNo.onclick = () => openStakePopup("NO");
 
   function openStakePopup(choice) {
     selectedChoice = choice;
@@ -298,11 +301,11 @@
     stakeDisplay.textContent = valStr;
   };
 
-  stakeCancelBtn.addEventListener("click", () => {
+  stakeCancelBtn.onclick = () => {
     stakePopup.style.display = "none";
-  });
+  };
 
-  stakeSaveBtn.addEventListener("click", () => {
+  stakeSaveBtn.onclick = () => {
     const stakeValue = Number(stakeInput.value);
     if (stakeValue <= 0 || stakeValue > balance) {
       alert("Please enter a valid stake within your available balance.");
@@ -315,7 +318,7 @@
 
     qInfoEl.innerHTML = `You chose: <span style="color:${selectedChoice==='YES'?'var(--yes-green)':'var(--no-red)'}; font-weight:700;">${selectedChoice}</span><br>Stake: ${currentStake}⚡<br>Timer: Active`;
     stakePopup.style.display = "none";
-  });
+  };
 
   function resolveSoloQuestion() {
     clearInterval(timerInterval);
