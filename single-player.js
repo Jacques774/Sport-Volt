@@ -26,15 +26,15 @@ const SoloQuestionPicker = {
   }
 };
 
-// 🔑 TIMER FORMATTER: Converts total seconds into minutes display
+// 🔑 TIMER FORMATTER: Converts total seconds into "Xm Ys" format (e.g. 90 -> "1m 30s")
 function formatTime(totalSeconds) {
-  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
-  const minutes = safeSeconds / 60;
-
-  if (Number.isInteger(minutes)) {
-    return `${minutes}m`;
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  
+  if (mins > 0) {
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   }
-  return `${minutes.toFixed(1)}m`;
+  return `${secs}s`;
 }
 
 /*******************************
@@ -344,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (activeQ && activeQ.stake > 0 && !activeQ.cashedOut) {
           startCashoutTimer(Math.floor(activeQ.timer / 2));
         } else if (timerEl) {
-          timerEl.textContent = "Cash out: --m";
+          timerEl.textContent = "Cash out: --";
         }
       });
     },
