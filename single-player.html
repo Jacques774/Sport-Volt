@@ -120,6 +120,7 @@
 
   <div class="bottom-buttons">
     <button class="nav-btn" onclick="openHistory()">History</button>
+    <button class="nav-btn" onclick="endGame()" style="border-color: var(--no-red); color: var(--no-red);">End Game</button>
   </div>
 
   <!-- ============================
@@ -609,6 +610,9 @@
     gameOverFinalBalance.textContent = `Final Balance: ${balance.toFixed(2)}⚡`;
     gameOverModal.style.display = "flex";
   }
+  
+  // Expose endGame globally so the End Game button can trigger it
+  window.endGame = endGame;
 </script>
 
 </body>
