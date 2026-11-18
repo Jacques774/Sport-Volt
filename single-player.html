@@ -93,7 +93,7 @@
           Timer: --
         </span>
         <div class="cashout-action">
-          <button class="cashout-btn" id="cashout-btn">Cash Out: --</button>
+          <button class="cashout-btn" id="cashout-btn" disabled>Cash Out: --</button>
           <div class="cashout-timer" id="timer">Cash out: --s</div>
         </div>
       </div>
@@ -152,24 +152,39 @@
 
 </div>
 
-<!-- EMBEDDED GAME ENGINE SCRIPT WITH REAL RUGBY CLIPS -->
-<script>
-  // Real iconic rugby match & highlight clip IDs for testing
-  const sampleQuestions = [
-    { text: "Will this blistering counter-attack result in a try?", youtubeId: "389R5Kj-k98", timerSeconds: 15 },
-    { text: "Will the kicker successfully convert from the sideline?", youtubeId: "X_t5g9v3a1k", timerSeconds: 15 },
-    { text: "Will this crunching try-saver tackle prevent the score?", youtubeId: "7L2p5k8-q9E", timerSeconds: 15 },
-    { text: "Will the defending pack successfully hold up the maul?", youtubeId: "9k2v5m4-x1Q", timerSeconds: 15 },
-    { text: "Will this intercept pass lead to a breakaway try?", youtubeId: "4p8n2v7-s3W", timerSeconds: 15 }
-  ];
+<!-- EMBEDDED MODULE SCRIPT -->
+<script type="module">
+  import { SinglePlayerQuestions } from "./SinglePlayerQuestions.js";
+
+  let lastQuestionId = null;
+
+  const SoloQuestionPicker = {
+    getRand() {
+      let deck = SinglePlayerQuestions;
+      if (!deck || deck.length === 0) {
+        return { id: "fallback", text: "Will a try be scored in the next passage of play?", youtubeId: "389R5Kj-k98", timer: 15 };
+      }
+
+      let available = deck;
+      if (lastQuestionId && deck.length > 1) {
+        available = deck.filter(q => q.id !== lastQuestionId);
+      }
+
+      const randomIndex = Math.floor(Math.random() * available.length);
+      const selected = available[randomIndex];
+      lastQuestionId = selected.id;
+      return selected;
+    }
+  };
 
   let playerName = "Solo Player";
-  let clipCode = "RUGBY24";
   let balance = 50.00;
   let currentQuestionIndex = 0;
-  let selectedChoice = null;
-  let currentStake = 0;
-  let timerInterval = null;
+  let totalWins = 0;
+  let totalCashouts = 0;
+
+  let questionCountdown = null;
+  let cashoutCountdown = null;
 
   const setupSlide = document.getElementById("playerSetupSlide");
   const dashboard = document.getElementById("dashboard");
@@ -180,12 +195,16 @@
   const playerNameEl = document.getElementById("player-name");
   const playerBalanceEl = document.getElementById("player-balance");
   const questionTallyEl = document.getElementById("player-question-tally");
+  const playerWinsEl = document.getElementById("player-wins");
+  const playerCashoutsEl = document.getElementById("player-cashouts");
+  
   const questionTextEl = document.getElementById("q-text");
   const qInfoEl = document.getElementById("q-info");
   const timerEl = document.getElementById("timer");
 
   const btnYes = document.getElementById("btn-yes");
   const btnNo = document.getElementById("btn-no");
+  const cashoutBtn = document.getElementById("cashout-btn");
 
   const youtubeContainer = document.getElementById("youtubeContainer");
   const youtubePlayer = document.getElementById("youtubePlayer");
@@ -200,12 +219,13 @@
   const gameOverMessage = document.getElementById("gameOverMessage");
   const gameOverFinalBalance = document.getElementById("gameOverFinalBalance");
 
+  let currentQuestionData = null;
+  let currentStake = 0;
+  let selectedChoice = null;
+
   startSoloBtn.onclick = function() {
     const nameVal = playerNameInput.value.trim();
-    const codeVal = clipCodeInput.value.trim().toUpperCase();
-
     if (nameVal) playerName = nameVal;
-    if (codeVal) clipCode = codeVal;
 
     setupSlide.style.display = "none";
     setupSlide.classList.add("hidden");
@@ -213,52 +233,76 @@
 
     playerNameEl.textContent = `Player: ${playerName}`;
     updateBalanceDisplay();
-    loadQuestion(0);
+    loadQuestion();
   };
 
   function updateBalanceDisplay() {
     playerBalanceEl.textContent = `Balance: ${balance.toFixed(2)}⚡`;
   }
 
-  function loadQuestion(index) {
-    if (index >= sampleQuestions.length) {
+  function loadQuestion() {
+    if (currentQuestionIndex >= SinglePlayerQuestions.length) {
       endGame();
       return;
     }
 
-    currentQuestionIndex = index;
-    const q = sampleQuestions[index];
+    currentQuestionData = SoloQuestionPicker.getRand();
+    currentQuestionIndex++;
 
-    questionTallyEl.textContent = `Question ${index + 1} of ${sampleQuestions.length}`;
-    questionTextEl.textContent = q.text;
-    qInfoEl.innerHTML = `You chose: --<br>Stake: --<br>Timer: Active`;
+    questionTallyEl.textContent = `Question ${currentQuestionIndex} of ${SinglePlayerQuestions.length}`;
+    questionTextEl.textContent = currentQuestionData.text;
+    qInfoEl.innerHTML = `You chose: --<br>Stake: --<br>Timer: ${currentQuestionData.timer}s`;
 
+    btnYes.disabled = false;
+    btnNo.disabled = false;
     btnYes.classList.remove("selected");
     btnNo.classList.remove("selected");
     selectedChoice = null;
     currentStake = 0;
 
-    if (q.youtubeId) {
+    cashoutBtn.disabled = true;
+    cashoutBtn.textContent = "Cash Out: --";
+    timerEl.textContent = "Cash out: --s";
+
+    if (currentQuestionData.youtubeId) {
       youtubeContainer.style.display = "block";
-      // Added parameters to start muted/autoplay smoothly
-      youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${q.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentQuestionData.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
-    startQuestionTimer(q.timerSeconds);
+    startQuestionTimer(currentQuestionData.timer || 15);
   }
 
+  // 1. Question Timer (Runs in #q-info)
   function startQuestionTimer(duration) {
+    let timeLeft = duration;
+    
+    clearInterval(questionCountdown);
+    questionCountdown = setInterval(() => {
+      timeLeft--;
+      qInfoEl.innerHTML = `You chose: ${selectedChoice || "--"}<br>Stake: ${currentStake > 0 ? currentStake + "⚡" : "--"}<br>Timer: ${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(questionCountdown);
+        clearInterval(cashoutCountdown);
+        resolveSoloQuestion();
+      }
+    }, 1000);
+  }
+
+  // 2. Cashout Button Timer (Runs in #timer element next to cash out button)
+  function startCashoutTimer(duration) {
     let timeLeft = duration;
     timerEl.textContent = `Cash out: ${timeLeft}s`;
 
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
+    clearInterval(cashoutCountdown);
+    cashoutCountdown = setInterval(() => {
       timeLeft--;
       timerEl.textContent = `Cash out: ${timeLeft}s`;
 
       if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        resolveSoloQuestion();
+        clearInterval(cashoutCountdown);
+        cashoutBtn.disabled = true;
+        timerEl.textContent = "Cash out: Expired";
       }
     }, 1000);
   }
@@ -276,7 +320,6 @@
       btnYes.classList.remove("selected");
     }
 
-    currentStake = 0;
     stakeDisplay.textContent = "0";
     stakeInput.value = "0";
     stakePopup.style.display = "flex";
@@ -317,16 +360,49 @@
 
     qInfoEl.innerHTML = `You chose: <span style="color:${selectedChoice==='YES'?'var(--yes-green)':'var(--no-red)'}; font-weight:700;">${selectedChoice}</span><br>Stake: ${currentStake}⚡<br>Timer: Active`;
     stakePopup.style.display = "none";
+
+    // Lock voting buttons and enable cashout button
+    btnYes.disabled = true;
+    btnNo.disabled = true;
+    cashoutBtn.disabled = false;
+    cashoutBtn.textContent = `Cash Out: ${(currentStake * 0.5).toFixed(2)}⚡`;
+
+    // Start cashout timer (half of total question duration)
+    startCashoutTimer(Math.floor((currentQuestionData.timer || 15) / 2));
+  };
+
+  cashoutBtn.onclick = () => {
+    if (currentStake <= 0) return;
+
+    clearInterval(cashoutCountdown);
+    const refund = currentStake * 0.5;
+    balance += refund;
+    updateBalanceDisplay();
+
+    totalCashouts++;
+    playerCashoutsEl.textContent = `Cash-outs: ${totalCashouts}`;
+
+    cashoutBtn.disabled = true;
+    timerEl.textContent = "Cashed Out";
+    qInfoEl.innerHTML += `<br><span style="color: #f59e0b;">Cashed out +${refund.toFixed(2)}⚡</span>`;
+
+    setTimeout(() => {
+      loadQuestion();
+    }, 1500);
   };
 
   function resolveSoloQuestion() {
-    clearInterval(timerInterval);
+    clearInterval(questionCountdown);
+    clearInterval(cashoutCountdown);
+
     const isWin = Math.random() > 0.5;
 
     if (currentStake > 0) {
       if (isWin) {
         const payout = currentStake * 2;
         balance += payout;
+        totalWins++;
+        playerWinsEl.textContent = `Wins: ${totalWins}`;
         alert(`Result: WIN! +${payout}⚡`);
       } else {
         alert(`Result: LOSS. Better luck next question!`);
@@ -337,12 +413,13 @@
     }
 
     setTimeout(() => {
-      loadQuestion(currentQuestionIndex + 1);
+      loadQuestion();
     }, 1000);
   }
 
   function endGame() {
-    clearInterval(timerInterval);
+    clearInterval(questionCountdown);
+    clearInterval(cashoutCountdown);
     youtubeContainer.style.display = "none";
     youtubePlayer.innerHTML = "";
 
