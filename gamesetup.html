@@ -347,10 +347,10 @@
       </div>
 
       <label>Starting Balance (⚡)</label>
-      <input type="number" id="starting-balance" min="20" value="50" placeholder="50">
+      <input type="number" id="starting-balance" min="20" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="50" placeholder="50">
 
       <label>How Many Questions (Max 20)</label>
-      <input type="number" id="question-count" min="1" max="20" value="20" placeholder="20">
+      <input type="number" id="question-count" min="1" max="20" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="20" placeholder="20">
 
       <div id="setupError" style="color:#ef4444; font-weight:600; display:none; font-size:0.8rem;"></div>
       
