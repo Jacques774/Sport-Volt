@@ -997,5 +997,40 @@ body:not(.stake-active) #potAmount {
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================
+   STAKE KEYPAD GRID & BUTTONS
+   ============================ */
+.stake-popup-content .keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.keypad-btn {
+  background: #050b14;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.keypad-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+}
+
+.keypad-btn:active {
+  transform: scale(0.96);
+}
+
+
 
 
