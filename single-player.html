@@ -120,7 +120,6 @@
 
   <div class="bottom-buttons">
     <button class="nav-btn" onclick="alert('History panel coming soon!')">History</button>
-    <button class="nav-btn" onclick="alert('Leaderboard panel coming soon!')">Leaderboard</button>
   </div>
 
   <!-- ============================
@@ -180,7 +179,7 @@
     getRand() {
       let deck = SinglePlayerQuestions;
       if (!deck || deck.length === 0) {
-        return { id: "fallback", text: "Will a try be scored in the next passage of play?", youtubeId: "389R5Kj-k98", timer: 60 };
+        return { id: "fallback", text: "Will a try be scored in the next passage of play?", youtubeId: "389R5Kj-k98", timer: 90 };
       }
 
       let available = deck;
@@ -270,7 +269,7 @@
 
     questionTallyEl.textContent = `Question ${currentQuestionIndex} of ${SinglePlayerQuestions.length}`;
     questionTextEl.textContent = currentQuestionData.text;
-    qInfoEl.innerHTML = `You chose: --<br>Stake: --<br>Timer: ${currentQuestionData.timer || 60}s`;
+    qInfoEl.innerHTML = `You chose: --<br>Stake: --<br>Timer: ${currentQuestionData.timer || 90}s`;
 
     btnYes.disabled = false;
     btnNo.disabled = false;
@@ -288,16 +287,16 @@
       youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentQuestionData.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
-    // Start 20-second Stake Window Timer (Matches Multiplayer)
+    // Start 20-second Stake Window Timer
     startStakeWindow(20, () => {
       btnYes.disabled = true;
       btnNo.disabled = true;
       if (currentStake > 0) {
-        startCashoutTimer(Math.floor((currentQuestionData.timer || 60) / 2));
+        startCashoutTimer(Math.floor((currentQuestionData.timer || 90) / 2));
       }
     });
 
-    startQuestionTimer(currentQuestionData.timer || 60);
+    startQuestionTimer(currentQuestionData.timer || 90);
   }
 
   function startStakeWindow(duration, onComplete) {
@@ -418,10 +417,10 @@
 
     cashoutBtn.disabled = false;
     cashoutBtn.textContent = `Cash Out: ${(currentStake * 0.5).toFixed(2)}⚡`;
-    startCashoutTimer(Math.floor((currentQuestionData.timer || 60) / 2));
+    startCashoutTimer(Math.floor((currentQuestionData.timer || 90) / 2));
   };
 
-  cashoutBtn.onclick = () => {
+    cashoutBtn.onclick = () => {
     if (currentStake <= 0) return;
 
     clearInterval(cashoutCountdown);
