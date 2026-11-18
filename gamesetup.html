@@ -85,6 +85,17 @@
       box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
     }
 
+    .setup-card input:disabled,
+    .custom-select-wrapper.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .custom-select-wrapper.disabled .custom-select {
+      pointer-events: none;
+      background: #03070d;
+    }
+
     /* LOCKED STATIC FIELD (Replaces Sport Dropdown) */
     .locked-field {
       padding: 9px 12px;
@@ -510,6 +521,8 @@
     const codeDisplay = document.getElementById("game-code-display");
     const shareBtn = document.getElementById("share-btn");
     const startBtn = document.getElementById("start-game-btn");
+    const modeWrapper = document.getElementById("mode-select-wrapper");
+    const questionCountInput = document.getElementById("question-count");
 
     const API_BASE = "https://prediction-backend-2e20.onrender.com/api";
     const BASE_URL = "https://prediction-backend-2e20.onrender.com";
@@ -518,7 +531,7 @@
       const sport = document.getElementById("sport-type").value; // Always "rugby"
       const gameMode = document.getElementById("game-mode").value; 
       const startingBalance = Number(balanceInput.value);
-      const questionCount = Number(document.getElementById("question-count").value);
+      const questionCount = Number(questionCountInput.value);
 
       let customDeckName = null;
       let customDeckQuestions = [];
@@ -588,8 +601,11 @@
         linkBox.style.display = "flex";
         startBtn.style.display = "block";
         
-        // Hide the Create Game button once successfully generated
+        // Hide the Create Game button & lock down setup options once generated
         createBtn.style.display = "none";
+        if (balanceInput) balanceInput.disabled = true;
+        if (questionCountInput) questionCountInput.disabled = true;
+        if (modeWrapper) modeWrapper.classList.add("disabled");
       })
       .catch(err => {
         console.error("Error creating game:", err);
