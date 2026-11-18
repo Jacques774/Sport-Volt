@@ -33,10 +33,10 @@
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid #f59e0b;
       color: #f59e0b;
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.85rem;
+      font-weight: 800;
+      font-size: 0.95rem;
       margin-bottom: 10px;
       display: inline-block;
     }
@@ -90,8 +90,8 @@
 
     <div class="card" id="active-card">
       <div class="card-header">
-        <!-- ⏱️ STAKE WINDOW TIMER BADGE -->
-        <div id="stakeCountdown" class="stake-countdown-badge">Stake window: 5s</div>
+        <!-- ⏱️ STAKE WINDOW TIMER BADGE (Forced Visible ID) -->
+        <div id="stakeCountdown" class="stake-countdown-badge" style="display: inline-block !important;">Stake window: 5s</div>
         <div class="question-text" id="q-text">Loading question...</div>
       </div>
       <div class="choices">
@@ -215,7 +215,6 @@
   const questionTextEl = document.getElementById("q-text");
   const qInfoEl = document.getElementById("q-info");
   const timerEl = document.getElementById("timer");
-  const stakeCountdownEl = document.getElementById("stakeCountdown");
 
   const btnYes = document.getElementById("btn-yes");
   const btnNo = document.getElementById("btn-no");
@@ -284,7 +283,7 @@
       youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentQuestionData.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
-    // Start 5-second Stake Window Timer
+    // Start 5-second Stake Window Timer with bulletproof element lookup
     startStakeWindow(5, () => {
       btnYes.disabled = true;
       btnNo.disabled = true;
@@ -296,20 +295,28 @@
     startQuestionTimer(currentQuestionData.timer || 15);
   }
 
-  // Stake Window Countdown Function
+  // Bulletproof Stake Window Countdown Function
   function startStakeWindow(duration, onComplete) {
     let timeLeft = duration;
-    stakeCountdownEl.style.display = "inline-block";
-    stakeCountdownEl.textContent = `Stake window: ${timeLeft}s`;
+    const badgeEl = document.getElementById("stakeCountdown");
+    
+    if (badgeEl) {
+      badgeEl.style.setProperty("display", "inline-block", "important");
+      badgeEl.textContent = `Stake window: ${timeLeft}s`;
+    }
 
     clearInterval(stakeTimerInterval);
     stakeTimerInterval = setInterval(() => {
       timeLeft--;
-      stakeCountdownEl.textContent = `Stake window: ${timeLeft}s`;
+      if (badgeEl) {
+        badgeEl.textContent = `Stake window: ${timeLeft}s`;
+      }
 
       if (timeLeft <= 0) {
         clearInterval(stakeTimerInterval);
-        stakeCountdownEl.style.display = "none";
+        if (badgeEl) {
+          badgeEl.style.setProperty("display", "none", "important");
+        }
         if (typeof onComplete === "function") onComplete();
       }
     }, 1000);
@@ -328,7 +335,8 @@
         clearInterval(questionCountdown);
         clearInterval(cashoutCountdown);
         clearInterval(stakeTimerInterval);
-        stakeCountdownEl.style.display = "none";
+        const badgeEl = document.getElementById("stakeCountdown");
+        if (badgeEl) badgeEl.style.setProperty("display", "none", "important");
         resolveSoloQuestion();
       }
     }, 1000);
@@ -435,7 +443,8 @@
     clearInterval(questionCountdown);
     clearInterval(cashoutCountdown);
     clearInterval(stakeTimerInterval);
-    stakeCountdownEl.style.display = "none";
+    const badgeEl = document.getElementById("stakeCountdown");
+    if (badgeEl) badgeEl.style.setProperty("display", "none", "important");
 
     const isWin = Math.random() > 0.5;
 
