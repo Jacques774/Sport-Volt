@@ -10,7 +10,7 @@ const SoloQuestionPicker = {
     let deck = SinglePlayerQuestions;
 
     if (!deck || deck.length === 0) {
-      return { id: "fallback", text: "Will a try be scored in the next passage of play?", youtubeId: "389R5Kj-k98", timer: 15 };
+      return { id: "fallback", text: "Will a try be scored in the next passage of play?", youtubeId: "389R5Kj-k98", timer: 90 };
     }
 
     let available = deck;
@@ -37,6 +37,99 @@ function formatTime(totalSeconds) {
   return `${secs}s`;
 }
 
+/*******************************
+ * HISTORY MODULE
+ *******************************/
+window.History = {
+  items: [],
+
+  push(entry) {
+    entry.timestamp = new Date();
+    entry.oldBalance = Number(entry.oldBalance || 0);
+    entry.newBalance = Number(entry.newBalance || entry.oldBalance);
+    this.items.push(entry);
+    this.render();
+  },
+
+  formatProfit(entry) {
+    const oldBal = typeof entry.oldBalance === "number" ? entry.oldBalance : 0;
+    const newBal = typeof entry.newBalance === "number" ? entry.newBalance : 0;
+    const profit = newBal - oldBal;
+
+    if (profit > 0) return `<span class="profit-pos">(+${profit.toFixed(2)}⚡)</span>`;
+    if (profit < 0) return `<span class="profit-neg">(-${Math.abs(profit).toFixed(2)}⚡)</span>`;
+    return `<span class="profit-zero">(0⚡)</span>`;
+  },
+
+  formatTime(date) {
+    const validDate = date instanceof Date ? date : new Date();
+    const d = validDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const t = validDate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    return `${d} • ${t}`;
+  },
+
+  outcomeClass(entry) {
+    if (entry.cashedOut) return "outcome-cash";
+    if (entry.userChoice === entry.outcome) return "outcome-yes";
+    return "outcome-no";
+  },
+
+  outcomeText(entry) {
+    if (entry.cashedOut) return "CASHED OUT";
+    if (entry.outcome === "YES") return "YES ✔";
+    if (entry.outcome === "NO") return "NO ✘";
+    return entry.outcome || "--";
+  },
+
+  render() {
+    const container = document.querySelector(".history-list");
+    if (!container) return;
+
+    if (this.items.length === 0) {
+      container.innerHTML = `<div style="color: var(--text-muted); text-align: center; margin-top: 30px;">No rounds played yet.</div>`;
+      return;
+    }
+
+    container.innerHTML = this.items
+      .slice()
+      .reverse()
+      .map(entry => {
+        const oldBal = typeof entry.oldBalance === "number" ? entry.oldBalance : 0;
+        const newBal = typeof entry.newBalance === "number" ? entry.newBalance : oldBal;
+
+        return `
+          <div class="history-card ${this.outcomeClass(entry)}">
+            <div class="history-question">${entry.text || "Unknown question"}</div>
+            <div class="history-outcome-text">${this.outcomeText(entry)}</div>
+            <div class="history-balance">
+              ${oldBal.toFixed(2)}⚡ → ${newBal.toFixed(2)}⚡
+              ${this.formatProfit(entry)}
+            </div>
+            <div class="history-time">${this.formatTime(entry.timestamp)}</div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+};
+
+window.openHistory = function () {
+  const panel = document.getElementById("historyPanel");
+  if (panel) {
+    panel.classList.add("active");
+    if (window.History && typeof window.History.render === "function") {
+      window.History.render();
+    }
+  }
+};
+
+window.closeHistory = function () {
+  const panel = document.getElementById("historyPanel");
+  if (panel) {
+    panel.classList.remove("active");
+  }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   // ============================
   // SOLO GAME STATE
@@ -47,6 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let totalQuestions = 20;
   let totalWins = 0;
   let totalCashouts = 0;
+  let roundStartBalance = 50.00;
 
   let questionCountdown = null;
   let cashoutCountdown = null;
@@ -188,6 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (window.isGameOver) return;
 
       const q = SoloQuestionPicker.getRand();
+      roundStartBalance = balance;
 
       if (cashoutBtn) {
         cashoutBtn.disabled = true;
@@ -200,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(cashoutCountdown);
       clearInterval(stakeTimerInterval);
 
-      const finalTimer = q.timer || 60;
+      const finalTimer = q.timer || 90;
 
       this.currentQuestion = { 
         ...q, 
@@ -225,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
         youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
       }
 
-      // 1. Overall Question Timer (Updates card info #q-info)
+      // 1. Overall Question Timer
       questionCountdown = setInterval(() => {
         const remaining = Math.max(0, Math.floor((this.currentQuestion.endTime - Date.now()) / 1000));
         if (qInfo) {
@@ -247,7 +342,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const activeQ = SoloEngine.currentQuestion;
         if (activeQ && activeQ.stake > 0 && !activeQ.cashedOut) {
-          // Kick off Cashout Button Timer once stake window closes
           startCashoutTimer(Math.floor(activeQ.timer / 2));
         } else if (timerEl) {
           timerEl.textContent = "Cash out: --s";
@@ -291,6 +385,16 @@ document.addEventListener("DOMContentLoaded", () => {
           Stake: ${q.stake.toFixed(2)}⚡ (CASHED OUT +${refund.toFixed(2)}⚡)<br>
           <small>Next round starting...</small>`;
       }
+
+      // Push to History
+      window.History.push({
+        text: q.text,
+        userChoice: q.userChoice,
+        outcome: "--",
+        cashedOut: true,
+        oldBalance: roundStartBalance,
+        newBalance: balance
+      });
 
       setTimeout(() => {
         proceedToNextRound();
@@ -364,21 +468,33 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Solo Outcome Simulator (50/50 win/loss)
     const outcome = Math.random() > 0.5 ? q.userChoice : (q.userChoice === "YES" ? "NO" : "YES");
     const isWin = (q.userChoice === outcome && q.stake > 0);
 
-    if (isWin) {
-      const payout = q.stake * 2;
-      balance += payout;
-      updateBalanceDisplay();
+    if (q.stake > 0) {
+      if (isWin) {
+        const payout = q.stake * 2;
+        balance += payout;
+        updateBalanceDisplay();
 
-      totalWins++;
-      if (playerWinsEl) playerWinsEl.textContent = `Wins: ${totalWins}`;
+        totalWins++;
+        if (playerWinsEl) playerWinsEl.textContent = `Wins: ${totalWins}`;
 
-      if (qInfo) qInfo.innerHTML += `<br><small style="color:var(--yes-green);">Outcome: ${outcome} (WIN! +${payout.toFixed(2)}⚡)</small>`;
+        if (qInfo) qInfo.innerHTML += `<br><small style="color:var(--yes-green);">Outcome: ${outcome} (WIN! +${payout.toFixed(2)}⚡)</small>`;
+      } else {
+        if (qInfo) qInfo.innerHTML += `<br><small style="color:var(--no-red);">Outcome: ${outcome} (LOST ${q.stake.toFixed(2)}⚡)</small>`;
+      }
+
+      window.History.push({
+        text: q.text,
+        userChoice: q.userChoice,
+        outcome: outcome,
+        cashedOut: false,
+        oldBalance: roundStartBalance,
+        newBalance: balance
+      });
     } else {
-      if (qInfo) qInfo.innerHTML += `<br><small style="color:var(--no-red);">Outcome: ${outcome} (LOST ${q.stake.toFixed(2)}⚡)</small>`;
+      if (qInfo) qInfo.innerHTML += `<br><small style="color:var(--text-muted);">Time up! No stake placed.</small>`;
     }
 
     setTimeout(() => {
@@ -489,7 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================
-  // GAME OVER & WALLET SYNC
+  // GAME OVER & END GAME
   // ============================
   function triggerGameOver() {
     window.isGameOver = true;
@@ -513,6 +629,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  window.endGame = function() {
+    clearInterval(questionCountdown);
+    clearInterval(cashoutCountdown);
+    clearInterval(stakeTimerInterval);
+    triggerGameOver();
+  };
+
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
       localStorage.setItem("user_credit", balance.toFixed(2));
@@ -527,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateActiveCard(q) {
     const safeStake = (typeof q.stake === "number" && !isNaN(q.stake)) ? q.stake : 0;
-    const remainingTime = q.endTime ? Math.max(0, Math.floor((q.endTime - Date.now()) / 1000)) : (q.timer || 60);
+    const remainingTime = q.endTime ? Math.max(0, Math.floor((q.endTime - Date.now()) / 1000)) : (q.timer || 90);
 
     if (qText) qText.textContent = q.text;
     if (qInfo) {
