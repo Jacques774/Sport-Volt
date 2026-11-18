@@ -33,15 +33,16 @@
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid #f59e0b;
       color: #f59e0b;
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
       font-weight: 800;
-      font-size: 0.9rem;
+      font-size: 1rem;
       text-align: center;
-      margin-top: 12px;
+      margin-top: 14px;
       display: block;
       width: 100%;
       box-sizing: border-box;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
     }
   </style>
 </head>
@@ -111,10 +112,10 @@
           <div class="cashout-timer" id="timer">Cash out: --s</div>
         </div>
       </div>
-
-      <!-- ⏱️ STAKE WINDOW TIMER BADGE (Relocated Below Card) -->
-      <div id="stakeCountdown" class="stake-countdown-badge" style="display: block !important;">Stake window: 5s</div>
     </div>
+
+    <!-- ⏱️ STAKE WINDOW TIMER BADGE (Relocated Outside & Below the Card) -->
+    <div id="stakeCountdown" class="stake-countdown-badge" style="display: block !important;">Stake window: 5s</div>
   </div>
 
   <div class="bottom-buttons">
