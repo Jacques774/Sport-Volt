@@ -377,6 +377,10 @@
   </div>
 
 <script>
+  // Global backend config
+  const API_BASE = "https://prediction-backend-2e20.onrender.com/api";
+  const BASE_URL = "https://prediction-backend-2e20.onrender.com";
+
   // Setup custom dropdown interactivity for remaining dropdowns
   function setupCustomDropdowns() {
     document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
@@ -386,7 +390,6 @@
 
       selectBox.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Close all other dropdowns first
         document.querySelectorAll('.custom-select').forEach(s => {
           if (s !== selectBox) s.classList.remove('open');
         });
@@ -414,7 +417,6 @@
           selectBox.classList.remove('open');
           optionsBox.classList.remove('open');
 
-          // Trigger change event if game mode changes
           if (hiddenInput && hiddenInput.id === 'game-mode') {
             handleGameModeChange();
           }
@@ -422,7 +424,6 @@
       });
     });
 
-    // Close dropdowns when clicking outside
     window.addEventListener('click', () => {
       document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('open'));
       document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('open'));
@@ -525,7 +526,7 @@
     const questionCountInput = document.getElementById("question-count");
 
     createBtn.addEventListener("click", () => {
-      const sport = document.getElementById("sport-type").value; // Always "rugby"
+      const sport = document.getElementById("sport-type").value;
       const gameMode = document.getElementById("game-mode").value; 
       const startingBalance = Number(balanceInput.value);
       const questionCount = Number(questionCountInput.value);
@@ -576,9 +577,6 @@
       }
       err.style.display = "none";
 
-      const API_BASE = "https://prediction-backend-2e20.onrender.com/api";
-      const BASE_URL = "https://prediction-backend-2e20.onrender.com";
-
       fetch(`${API_BASE}/create-game`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -607,7 +605,6 @@
         linkBox.style.display = "flex";
         startBtn.style.display = "block";
         
-        // Hide the Create Game button & lock down setup options once generated
         createBtn.style.display = "none";
         if (balanceInput) balanceInput.disabled = true;
         if (questionCountInput) questionCountInput.disabled = true;
@@ -634,6 +631,11 @@
     });
 
     startBtn.addEventListener("click", () => {
+      if (!window.GameSession) {
+        alert("Please create a game first.");
+        return;
+      }
+
       const { gameCode, gameMode, startingBalance, customDeckName } = window.GameSession;
       
       if (customDeckName) {
