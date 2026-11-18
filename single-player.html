@@ -29,6 +29,17 @@
       height: 100%;
       border: none;
     }
+    .stake-countdown-badge {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid #f59e0b;
+      color: #f59e0b;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +90,8 @@
 
     <div class="card" id="active-card">
       <div class="card-header">
+        <!-- ⏱️ STAKE WINDOW TIMER BADGE -->
+        <div id="stakeCountdown" class="stake-countdown-badge">Stake window: 5s</div>
         <div class="question-text" id="q-text">Loading question...</div>
       </div>
       <div class="choices">
@@ -185,6 +198,7 @@
 
   let questionCountdown = null;
   let cashoutCountdown = null;
+  let stakeTimerInterval = null;
 
   const setupSlide = document.getElementById("playerSetupSlide");
   const dashboard = document.getElementById("dashboard");
@@ -201,6 +215,7 @@
   const questionTextEl = document.getElementById("q-text");
   const qInfoEl = document.getElementById("q-info");
   const timerEl = document.getElementById("timer");
+  const stakeCountdownEl = document.getElementById("stakeCountdown");
 
   const btnYes = document.getElementById("btn-yes");
   const btnNo = document.getElementById("btn-no");
@@ -269,7 +284,35 @@
       youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentQuestionData.youtubeId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     }
 
+    // Start 5-second Stake Window Timer
+    startStakeWindow(5, () => {
+      btnYes.disabled = true;
+      btnNo.disabled = true;
+      if (currentStake > 0) {
+        startCashoutTimer(Math.floor((currentQuestionData.timer || 15) / 2));
+      }
+    });
+
     startQuestionTimer(currentQuestionData.timer || 15);
+  }
+
+  // Stake Window Countdown Function
+  function startStakeWindow(duration, onComplete) {
+    let timeLeft = duration;
+    stakeCountdownEl.style.display = "inline-block";
+    stakeCountdownEl.textContent = `Stake window: ${timeLeft}s`;
+
+    clearInterval(stakeTimerInterval);
+    stakeTimerInterval = setInterval(() => {
+      timeLeft--;
+      stakeCountdownEl.textContent = `Stake window: ${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(stakeTimerInterval);
+        stakeCountdownEl.style.display = "none";
+        if (typeof onComplete === "function") onComplete();
+      }
+    }, 1000);
   }
 
   // 1. Question Timer (Runs in #q-info)
@@ -284,6 +327,8 @@
       if (timeLeft <= 0) {
         clearInterval(questionCountdown);
         clearInterval(cashoutCountdown);
+        clearInterval(stakeTimerInterval);
+        stakeCountdownEl.style.display = "none";
         resolveSoloQuestion();
       }
     }, 1000);
@@ -361,13 +406,8 @@
     qInfoEl.innerHTML = `You chose: <span style="color:${selectedChoice==='YES'?'var(--yes-green)':'var(--no-red)'}; font-weight:700;">${selectedChoice}</span><br>Stake: ${currentStake}⚡<br>Timer: Active`;
     stakePopup.style.display = "none";
 
-    // Lock voting buttons and enable cashout button
-    btnYes.disabled = true;
-    btnNo.disabled = true;
     cashoutBtn.disabled = false;
     cashoutBtn.textContent = `Cash Out: ${(currentStake * 0.5).toFixed(2)}⚡`;
-
-    // Start cashout timer (half of total question duration)
     startCashoutTimer(Math.floor((currentQuestionData.timer || 15) / 2));
   };
 
@@ -394,6 +434,8 @@
   function resolveSoloQuestion() {
     clearInterval(questionCountdown);
     clearInterval(cashoutCountdown);
+    clearInterval(stakeTimerInterval);
+    stakeCountdownEl.style.display = "none";
 
     const isWin = Math.random() > 0.5;
 
@@ -420,6 +462,7 @@
   function endGame() {
     clearInterval(questionCountdown);
     clearInterval(cashoutCountdown);
+    clearInterval(stakeTimerInterval);
     youtubeContainer.style.display = "none";
     youtubePlayer.innerHTML = "";
 
