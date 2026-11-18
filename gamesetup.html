@@ -524,9 +524,6 @@
     const modeWrapper = document.getElementById("mode-select-wrapper");
     const questionCountInput = document.getElementById("question-count");
 
-    const API_BASE = "https://prediction-backend-2e20.onrender.com/api";
-    const BASE_URL = "https://prediction-backend-2e20.onrender.com";
-
     createBtn.addEventListener("click", () => {
       const sport = document.getElementById("sport-type").value; // Always "rugby"
       const gameMode = document.getElementById("game-mode").value; 
@@ -560,6 +557,12 @@
         return;
       }
 
+      if (questionCount < 1) {
+        err.textContent = "Minimum question limit is 1.";
+        err.style.display = "block";
+        return;
+      }
+
       if (questionCount > 20) {
         err.textContent = "Maximum question limit is 20.";
         err.style.display = "block";
@@ -572,6 +575,9 @@
         return;
       }
       err.style.display = "none";
+
+      const API_BASE = "https://prediction-backend-2e20.onrender.com/api";
+      const BASE_URL = "https://prediction-backend-2e20.onrender.com";
 
       fetch(`${API_BASE}/create-game`, {
         method: "POST",
