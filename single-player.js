@@ -177,6 +177,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const stakeSaveBtn = document.getElementById("stake-save-btn");
   const stakeCancelBtn = document.getElementById("stake-cancel-btn");
 
+  // Next Round Popup
+  const nextRoundPopup = document.getElementById("nextRoundPopup");
+  const anotherQuestionBtn = document.getElementById("another-question-btn");
+  const popupEndGameBtn = document.getElementById("popup-end-game-btn");
+
   // Game Over Modal
   const gameOverModal = document.getElementById("gameOverModal");
   const gameOverMessage = document.getElementById("gameOverMessage");
@@ -383,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (qInfo) {
         qInfo.innerHTML = `You chose: ${q.userChoice || "--"}<br>
           Stake: ${q.stake.toFixed(2)}⚡ (CASHED OUT +${refund.toFixed(2)}⚡)<br>
-          <small>Next round starting...</small>`;
+          <small>Round complete</small>`;
       }
 
       // Push to History
@@ -415,14 +420,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (potEl) potEl.style.display = "none";
     if (stakeEl) {
       stakeEl.style.display = "inline";
-      stakeEl.textContent = `Stake window: ${formatTime(duration)}`;
+      stakeEl.textContent = `Stake window: ${duration}s`;
     }
 
     let timeLeft = duration;
     clearInterval(stakeTimerInterval);
     stakeTimerInterval = setInterval(() => {
       timeLeft--;
-      if (stakeEl) stakeEl.textContent = `Stake window: ${formatTime(timeLeft)}`;
+      if (stakeEl) stakeEl.textContent = `Stake window: ${timeLeft}s`;
 
       if (timeLeft <= 0) {
         clearInterval(stakeTimerInterval);
@@ -508,8 +513,28 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    startPostQuestionCountdown(() => {
-      SoloEngine.nextQuestion();
+    if (nextRoundPopup) {
+      nextRoundPopup.style.display = "flex";
+    } else {
+      startPostQuestionCountdown(() => {
+        SoloEngine.nextQuestion();
+      });
+    }
+  }
+
+  if (anotherQuestionBtn) {
+    anotherQuestionBtn.addEventListener("click", () => {
+      if (nextRoundPopup) nextRoundPopup.style.display = "none";
+      startPostQuestionCountdown(() => {
+        SoloEngine.nextQuestion();
+      });
+    });
+  }
+
+  if (popupEndGameBtn) {
+    popupEndGameBtn.addEventListener("click", () => {
+      if (nextRoundPopup) nextRoundPopup.style.display = "none";
+      window.endGame();
     });
   }
 
