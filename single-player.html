@@ -171,6 +171,24 @@
     </div>
   </div>
 
+  <!-- NEXT ROUND / END PROMPT POPUP -->
+  <div id="nextRoundPopup" class="stake-popup" style="display: none;">
+    <div class="stake-popup-content" style="text-align: center;">
+      <h3>Round Complete</h3>
+      <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem;">
+        Ready for another question or want to end the game?
+      </p>
+      <div class="stake-popup-actions">
+        <button id="another-question-btn" type="button" style="flex: 1; padding: 12px; border-radius: 30px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: uppercase; background: var(--yes-green); color: var(--yes-green-dark); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);">
+          Another Question
+        </button>
+        <button id="popup-end-game-btn" type="button" style="flex: 1; padding: 12px; border-radius: 30px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-transform: uppercase; background: var(--no-red); color: var(--text-main); box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);">
+          End Game
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- GAME OVER MODAL -->
   <div id="gameOverModal" class="stake-popup" style="display: none;">
     <div class="stake-popup-content" style="text-align: center;">
