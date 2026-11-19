@@ -5,12 +5,20 @@ import { SinglePlayerQuestions } from "./SinglePlayerQuestions.js";
 // ============================
 let lastQuestionId = null;
 
+const FALLBACK_VIDEO_URL =
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+
 const SoloQuestionPicker = {
   getRand() {
     let deck = SinglePlayerQuestions;
 
     if (!deck || deck.length === 0) {
-      return { id: "fallback", text: "Will a try be scored in the next passage of play?", youtubeId: "389R5Kj-k98", timer: 90 };
+      return {
+        id: "fallback",
+        text: "Will a try be scored in the next passage of play?",
+        videoUrl: FALLBACK_VIDEO_URL,
+        timer: 90
+      };
     }
 
     let available = deck;
@@ -167,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnNo = document.getElementById("btn-no");
   const cashoutBtn = document.getElementById("cashout-btn");
 
-  // YouTube Container
+  // Video Container
   const youtubeContainer = document.getElementById("youtubeContainer");
   const youtubePlayer = document.getElementById("youtubePlayer");
 
@@ -318,11 +326,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateActiveCard(this.currentQuestion);
 
-      // 📺 Embed & Play YouTube Clip
+      // 📺 Load this question's individual video clip link
       if (youtubeContainer && youtubePlayer) {
-        const videoId = this.currentQuestion.youtubeId || "389R5Kj-k98";
+        const clipUrl = this.currentQuestion.videoUrl || FALLBACK_VIDEO_URL;
         youtubeContainer.style.display = "block";
-        youtubePlayer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        youtubePlayer.innerHTML = `
+          <video
+            src="${clipUrl}"
+            autoplay
+            muted
+            loop
+            playsinline
+            controls
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
+          ></video>
+        `;
       }
 
       // 1. Overall Question Timer
