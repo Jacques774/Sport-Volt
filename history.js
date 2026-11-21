@@ -24,12 +24,12 @@ window.History = {
     const profit = newBal - oldBal;
 
     if (profit > 0)
-      return `<span class="profit-pos">(+£${profit.toFixed(2)})</span>`;
+      return `<span class="profit-pos">(+${profit.toFixed(2)}⚡)</span>`;
 
     if (profit < 0)
-      return `<span class="profit-neg">(-£${Math.abs(profit).toFixed(2)})</span>`;
+      return `<span class="profit-neg">(-${Math.abs(profit).toFixed(2)}⚡)</span>`;
 
-    return `<span class="profit-zero">(£0)</span>`;
+    return `<span class="profit-zero">(0.00⚡)</span>`;
   },
 
   formatTime(date) {
@@ -78,7 +78,7 @@ window.History = {
             <div class="history-outcome-text">${this.outcomeText(entry)}</div>
 
             <div class="history-balance">
-              £${oldBal.toFixed(2)} → £${newBal.toFixed(2)}
+              ${oldBal.toFixed(2)}⚡ → ${newBal.toFixed(2)}⚡
               ${this.formatProfit(entry)}
             </div>
 
