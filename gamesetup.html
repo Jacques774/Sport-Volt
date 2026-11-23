@@ -111,6 +111,34 @@
       justify-content: space-between;
     }
 
+    /* ESTIMATED TIME BANNER */
+    .estimate-box {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(0, 210, 255, 0.08);
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .estimate-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .estimate-value {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+      text-align: right;
+    }
+
     /* CUSTOM APP-THEMED DROPDOWN STYLING */
     .custom-select-wrapper {
       position: relative;
@@ -352,6 +380,12 @@
       <label>How Many Questions (Max 20)</label>
       <input type="number" id="question-count" min="1" max="20" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="20" placeholder="20">
 
+      <!-- Estimated Game Time -->
+      <div class="estimate-box">
+        <span class="estimate-label">Estimated Game Time</span>
+        <span class="estimate-value" id="estimated-time">~60 mins</span>
+      </div>
+
       <div id="setupError" style="color:#ef4444; font-weight:600; display:none; font-size:0.8rem;"></div>
       
       <button id="create-game-btn">Create Game</button>
@@ -380,6 +414,55 @@
   // Global backend config
   const API_BASE = "https://prediction-backend-2e20.onrender.com/api";
   const BASE_URL = "https://prediction-backend-2e20.onrender.com";
+
+  // Average minutes per question by game mode
+  const MODE_AVG_MINUTES = {
+    blitz: 3,     // 2m - 4m range
+    tactical: 7.5,// 5m - 10m range
+    mix: 4,       // ~40 mins for 10 mixed questions
+    custom: 3.5   // Default pace for custom lists
+  };
+
+  function formatDurationMinutes(totalMinutes) {
+    const mins = Math.max(1, Math.round(totalMinutes));
+    if (mins < 60) {
+      return `~${mins} ${mins === 1 ? "min" : "mins"}`;
+    }
+    const hours = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    if (remMins === 0) {
+      return `~${hours} ${hours === 1 ? "hr" : "hrs"}`;
+    }
+    return `~${hours}h ${remMins}m`;
+  }
+
+  function updateEstimatedTime() {
+    const estimateEl = document.getElementById("estimated-time");
+    const modeInput = document.getElementById("game-mode");
+    const countInput = document.getElementById("question-count");
+    const folderInput = document.getElementById("custom-folder-select");
+
+    if (!estimateEl || !modeInput || !countInput) return;
+
+    const mode = modeInput.value || "blitz";
+    let count = Number(countInput.value);
+
+    if (mode === "custom" && folderInput && folderInput.value) {
+      const allLists = JSON.parse(localStorage.getItem("custom_question_lists") || "{}");
+      const deck = allLists[folderInput.value];
+      if (Array.isArray(deck) && deck.length > 0) {
+        count = deck.length;
+      }
+    }
+
+    if (!count || count < 1) {
+      estimateEl.textContent = "--";
+      return;
+    }
+
+    const avgPerQuestion = MODE_AVG_MINUTES[mode] || 4;
+    estimateEl.textContent = formatDurationMinutes(count * avgPerQuestion);
+  }
 
   // Setup custom dropdown interactivity for remaining dropdowns
   function setupCustomDropdowns() {
@@ -420,6 +503,7 @@
           if (hiddenInput && hiddenInput.id === 'game-mode') {
             handleGameModeChange();
           }
+          updateEstimatedTime();
         });
       });
     });
@@ -479,6 +563,7 @@
 
         document.querySelector("#custom-folder-wrapper .custom-select").classList.remove('open');
         optionsContainer.classList.remove('open');
+        updateEstimatedTime();
       });
 
       optionsContainer.appendChild(opt);
@@ -497,6 +582,7 @@
     } else {
       folderContainer.style.display = "none";
     }
+    updateEstimatedTime();
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -524,6 +610,11 @@
     const startBtn = document.getElementById("start-game-btn");
     const modeWrapper = document.getElementById("mode-select-wrapper");
     const questionCountInput = document.getElementById("question-count");
+
+    if (questionCountInput) {
+      questionCountInput.addEventListener("input", updateEstimatedTime);
+    }
+    updateEstimatedTime();
 
     createBtn.addEventListener("click", () => {
       const sport = document.getElementById("sport-type").value;
