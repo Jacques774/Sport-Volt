@@ -42,7 +42,7 @@ const RugbyQuestions = {
 // DOM Helpers for Stake Timer & Delayed Pot Reveal
 // ============================
 window.isStakeWindowActive = false;
-window.isGameOver = false; // 🔑 Freeze question flag
+window.isGameOver = false; // Freeze question flag
 window.currentQuestionNum = 0;
 window.totalQuestionsCount = 0;
 
@@ -105,7 +105,7 @@ if (!gameId) {
 }
 window.gameId = gameId;
 
-// 🔄 BULLETPROOF TAB VISIBILITY RE-SYNC & WAKE-UP HANDLER FOR HOST
+// BULLETPROOF TAB VISIBILITY RE-SYNC & WAKE-UP HANDLER FOR HOST
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     console.log("Host tab focused - checking connection and syncing state...");
@@ -121,7 +121,7 @@ document.addEventListener("visibilitychange", () => {
       });
     }
 
-    // 🔑 FORCE RE-KICK ACTIVE ENGINE TIMER LOOP UPON WAKE-UP IF AVAILABLE
+    // FORCE RE-KICK ACTIVE ENGINE TIMER LOOP UPON WAKE-UP IF AVAILABLE
     if (window.Engine && window.Engine.currentQuestion && window.Engine.currentQuestion.endTime) {
       clearInterval(window.questionCountdown);
       window.questionCountdown = Timer.start(window.Engine.currentQuestion,
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.totalWins = 0;
   window.totalCashouts = 0;
 
-  // 🔑 FETCH LIVE GAME ROOM DETAILS FROM BACKEND API
+  // FETCH LIVE GAME ROOM DETAILS FROM BACKEND API
   if (gameId) {
     try {
       const res = await fetch(`https://prediction-backend-2e20.onrender.com/api/game/${gameId}`);
@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Listen for server broadcast of new question (with absolute timestamp support)
   socket.on("new_question", ({ id, current, total, question: serverQuestion, endTime }) => {
-    // 🔑 Stop loading questions if game is over
+    // Stop loading questions if game is over
     if (window.isGameOver) {
       console.log("🛑 Game is complete. Ignoring new question emission.");
       return;
@@ -212,7 +212,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (current !== undefined && current === lastSeenHostIndex) return;
     if (current !== undefined) lastSeenHostIndex = current;
 
-    // 🔑 Dynamically fetch question using mode from URL if server didn't pass full question object
+    // Dynamically fetch question using mode from URL if server didn't pass full question object
     let question = serverQuestion;
     if (!question || !question.text) {
       const gameMode = urlParams.get("mode") || "blitz";
@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // 🔑 GAME OVER LISTENER (SAFE NUMERIC PARSING & AUTO LEADERBOARD OPEN)
+  // GAME OVER LISTENER (SAFE NUMERIC PARSING & AUTO LEADERBOARD OPEN)
   socket.on("game_over", ({ leaderboard }) => {
     if (window.hasProcessedGameOver) return;
     window.hasProcessedGameOver = true;
@@ -272,7 +272,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      // 🔑 POPULATE & UPDATE LEADERBOARD DATA
+      // POPULATE & UPDATE LEADERBOARD DATA
       if (typeof Leaderboard !== "undefined") {
         sorted.forEach(p => {
           Leaderboard.update(p.name, p.balance);
@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       positionText = "Game Over. You finished in a loss. 📉";
     }
 
-    // 🔑 Safely parse wallet and earnings as numbers before adding
+    // Safely parse wallet and earnings as numbers before adding
     const rawWallet = localStorage.getItem("user_credit");
     let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 30.00;
     
@@ -315,7 +315,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       gameOverModal.style.display = "flex";
     }
 
-    // 🔑 Automatically open leaderboard panel after short delay
+    // Automatically open leaderboard panel after short delay
     setTimeout(() => {
       if (typeof openLeaderboard === "function") {
         openLeaderboard();
@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (outcomePanel) outcomePanel.textContent = `Outcome: ${outcome}`;
   });
 
-  // 🔑 Outcome buttons with End-of-Game Trigger
+  // Outcome buttons with End-of-Game Trigger
   function handleOutcomeClick(outcome) {
     console.log(`✅ Host chose outcome ${outcome}`);
     socket.emit("round_outcome", { gameId: window.gameId, outcome });
@@ -422,7 +422,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // 🔑 Safely parse wallet credit and auto-refill if lower than required buy-in for testing
+    // Safely parse wallet credit and auto-refill if lower than required buy-in for testing
     const rawCredit = localStorage.getItem("user_credit");
     let currentCredit = (rawCredit !== null && !isNaN(parseFloat(rawCredit))) ? parseFloat(rawCredit) : 1000.00;
 
@@ -471,19 +471,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 window.startPreCountdown = function (onDone) {
   const el = document.getElementById("preCountdown");
+  const activeCard = document.getElementById("active-card");
+
+  if (activeCard) {
+    activeCard.style.display = "none";
+  }
+
   if (!el) {
+    if (activeCard && !window.isGameOver) activeCard.style.display = "block";
     if (typeof onDone === "function") onDone();
     return;
   }
+
   el.style.display = "block";
   let count = 3;
   el.textContent = count;
+
   const interval = setInterval(() => {
     count--;
     el.textContent = count > 0 ? count : "GO!";
     if (count < 0) {
       clearInterval(interval);
       el.style.display = "none";
+      if (activeCard && !window.isGameOver) activeCard.style.display = "block";
       if (typeof onDone === "function") onDone();
     }
   }, 1000);
