@@ -42,13 +42,28 @@ const RugbyQuestions = {
 // DOM Helpers for Stake Timer & Delayed Pot Reveal
 // ============================
 window.isStakeWindowActive = false;
+window.isCountdownActive = false;
 window.isGameOver = false; // Freeze question flag
 window.currentQuestionNum = 0;
 window.totalQuestionsCount = 0;
 
+function setQuestionCardHidden(hidden) {
+  const activeCard = document.getElementById("active-card");
+  if (!activeCard) return;
+
+  if (hidden || window.isGameOver) {
+    activeCard.style.setProperty("display", "none", "important");
+  } else {
+    activeCard.style.removeProperty("display");
+    activeCard.style.display = "block";
+  }
+}
+
 function showCountdown(timeLeft) {
   window.isStakeWindowActive = true;
+  window.isCountdownActive = true;
   document.body.classList.add("stake-active");
+  setQuestionCardHidden(true);
 
   const countdownEl = document.getElementById("stakeCountdown");
   const potEl = document.getElementById("potAmount");
@@ -62,7 +77,9 @@ function showCountdown(timeLeft) {
 
 function revealPot(amount) {
   window.isStakeWindowActive = false;
+  window.isCountdownActive = false;
   document.body.classList.remove("stake-active");
+  setQuestionCardHidden(false);
 
   const countdownEl = document.getElementById("stakeCountdown");
   const potEl = document.getElementById("potAmount");
@@ -85,6 +102,7 @@ function updatePot(amount) {
   }
 }
 
+window.setQuestionCardHidden = setQuestionCardHidden;
 window.showCountdown = showCountdown;
 window.revealPot = revealPot;
 window.updatePot = updatePot;
@@ -180,8 +198,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log(`Game starting by host: ${host}`);
 
     startPreCountdown(() => {
-      const activeCard = document.getElementById("active-card");
-      if (activeCard && !window.isGameOver) activeCard.style.display = "block";
+      if (!window.isGameOver && !window.isCountdownActive) {
+        setQuestionCardHidden(false);
+      }
     });
   });
 
@@ -225,6 +244,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     console.log(`📡 Host received new question: ${question.text}`);
+    if (!window.isCountdownActive) {
+      setQuestionCardHidden(false);
+    }
     if (typeof Engine !== "undefined" && typeof Engine.nextQuestion === "function") {
       Engine.nextQuestion(question);
     }
@@ -251,8 +273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.isGameOver = true;
 
     // Hide active question card immediately
-    const activeCard = document.getElementById("active-card");
-    if (activeCard) activeCard.style.display = "none";
+    setQuestionCardHidden(true);
 
     // Close host outcome panel if open
     const outcomePanel = document.querySelector(".host-outcome-panel");
@@ -377,6 +398,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Outcome buttons with End-of-Game Trigger
   function handleOutcomeClick(outcome) {
     console.log(`✅ Host chose outcome ${outcome}`);
+    setQuestionCardHidden(true);
     socket.emit("round_outcome", { gameId: window.gameId, outcome });
 
     // Check if current question reaches or exceeds the total question count
@@ -471,14 +493,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 window.startPreCountdown = function (onDone) {
   const el = document.getElementById("preCountdown");
-  const activeCard = document.getElementById("active-card");
-
-  if (activeCard) {
-    activeCard.style.display = "none";
-  }
+  window.isCountdownActive = true;
+  setQuestionCardHidden(true);
 
   if (!el) {
-    if (activeCard && !window.isGameOver) activeCard.style.display = "block";
+    window.isCountdownActive = false;
+    if (!window.isGameOver) setQuestionCardHidden(false);
     if (typeof onDone === "function") onDone();
     return;
   }
@@ -493,7 +513,8 @@ window.startPreCountdown = function (onDone) {
     if (count < 0) {
       clearInterval(interval);
       el.style.display = "none";
-      if (activeCard && !window.isGameOver) activeCard.style.display = "block";
+      window.isCountdownActive = false;
+      if (!window.isGameOver) setQuestionCardHidden(false);
       if (typeof onDone === "function") onDone();
     }
   }, 1000);
