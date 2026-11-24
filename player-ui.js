@@ -42,11 +42,26 @@ const RugbyQuestions = {
 // DOM Helpers for Stake Timer & Delayed Pot Reveal
 // ============================
 window.isStakeWindowActive = false;
-window.isGameOver = false; // 🔑 Freeze question flag
+window.isCountdownActive = false;
+window.isGameOver = false; // Freeze question flag
+
+function setQuestionCardHidden(hidden) {
+  const activeCard = document.getElementById("active-card");
+  if (!activeCard) return;
+
+  if (hidden || window.isGameOver) {
+    activeCard.style.setProperty("display", "none", "important");
+  } else {
+    activeCard.style.removeProperty("display");
+    activeCard.style.display = "block";
+  }
+}
 
 function showCountdown(timeLeft) {
   window.isStakeWindowActive = true;
+  window.isCountdownActive = true;
   document.body.classList.add("stake-active");
+  setQuestionCardHidden(true);
 
   const countdownEl = document.getElementById("stakeCountdown");
   const potEl = document.getElementById("potAmount");
@@ -60,7 +75,9 @@ function showCountdown(timeLeft) {
 
 function revealPot(amount) {
   window.isStakeWindowActive = false;
+  window.isCountdownActive = false;
   document.body.classList.remove("stake-active");
+  setQuestionCardHidden(false);
 
   const countdownEl = document.getElementById("stakeCountdown");
   const potEl = document.getElementById("potAmount");
@@ -83,6 +100,7 @@ function updatePot(amount) {
   }
 }
 
+window.setQuestionCardHidden = setQuestionCardHidden;
 window.showCountdown = showCountdown;
 window.revealPot = revealPot;
 window.updatePot = updatePot;
@@ -97,7 +115,7 @@ function initPlayerUI() {
   window.totalWins = 0;
   window.totalCashouts = 0;
   
-  // 🔑 Safely read actual wallet credit from localStorage
+  // Safely read actual wallet credit from localStorage
   const rawInitCredit = localStorage.getItem("user_credit");
   const playerCredit = (rawInitCredit !== null && !isNaN(parseFloat(rawInitCredit))) ? parseFloat(rawInitCredit) : 30.00;
 
@@ -122,7 +140,7 @@ function initPlayerUI() {
 
   let pendingGameData = null;
 
-  // 1️⃣ Initial Join Click -> Fetches live room details from backend & opens Preview Modal
+  // 1. Initial Join Click -> Fetches live room details from backend & opens Preview Modal
   joinBtn.addEventListener("click", async () => {
     console.log("🎯 Player Join button clicked (Preview Gatekeeper)");
 
@@ -150,10 +168,10 @@ function initPlayerUI() {
     let sport = "Rugby";
     let questionCount = 40;
 
-    // 🔑 STORE BUY-IN GLOBALLY FOR GAME OVER COMPARISON
+    // STORE BUY-IN GLOBALLY FOR GAME OVER COMPARISON
     window.activeBuyInAmount = urlBuyin;
 
-    // 🔑 FETCH LIVE GAME ROOM DETAILS FROM BACKEND API
+    // FETCH LIVE GAME ROOM DETAILS FROM BACKEND API
     try {
       const res = await fetch(`https://prediction-backend-2e20.onrender.com/api/game/${gameId}`);
       if (res.ok) {
@@ -185,7 +203,7 @@ function initPlayerUI() {
     document.getElementById("preview-sport").textContent = pendingGameData.sport;
     document.getElementById("preview-questions").textContent = pendingGameData.questionCount;
     
-    // 🔑 Display Game Mode instead of card timer on preview modal
+    // Display Game Mode instead of card timer on preview modal
     const previewTimerEl = document.getElementById("preview-timer");
     if (previewTimerEl) {
       previewTimerEl.textContent = pendingGameData.gameModeDisplay;
@@ -226,7 +244,7 @@ function initPlayerUI() {
     }
   });
 
-  // 2️⃣ Cancel Modal -> Restores the setup slide
+  // 2. Cancel Modal -> Restores the setup slide
   if (cancelPreviewBtn) {
     cancelPreviewBtn.addEventListener("click", () => {
       if (modal) modal.style.display = "none";
@@ -234,12 +252,12 @@ function initPlayerUI() {
     });
   }
 
-  // 3️⃣ Confirm Join Inside Modal -> Safely Deducts Buy-in, Connects to Room & Opens Dashboard
+  // 3. Confirm Join Inside Modal -> Safely Deducts Buy-in, Connects to Room & Opens Dashboard
   if (confirmJoinBtn) {
     confirmJoinBtn.addEventListener("click", () => {
       if (!pendingGameData) return;
 
-      // 🔑 Safely parse and deduct buy-in from wallet credit
+      // Safely parse and deduct buy-in from wallet credit
       const rawCredit = localStorage.getItem("user_credit");
       let currentCredit = (rawCredit !== null && !isNaN(parseFloat(rawCredit))) ? parseFloat(rawCredit) : 30.00;
       const buyin = pendingGameData.startingBalance;
@@ -286,7 +304,7 @@ function initPlayerUI() {
     });
   }
 
-  // 4️⃣ Logout Button Listener -> Safely adds balance back to wallet & redirects to Main Menu
+  // 4. Logout Button Listener -> Safely adds balance back to wallet & redirects to Main Menu
   const logoutBtn = document.getElementById("logout-btn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -296,7 +314,7 @@ function initPlayerUI() {
           ? window.pot.balances[window.currentPlayerName]
           : 0;
         
-        // 🔑 Safely add final game balance to existing wallet credit using numeric parsing
+        // Safely add final game balance to existing wallet credit using numeric parsing
         const rawWallet = localStorage.getItem("user_credit");
         let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 0.00;
         
@@ -340,25 +358,34 @@ window.cashout = function () {
 
 window.startPreCountdown = function (onDone) {
   const el = document.getElementById("preCountdown");
+  window.isCountdownActive = true;
+  setQuestionCardHidden(true);
+
   if (!el) {
+    window.isCountdownActive = false;
+    if (!window.isGameOver) setQuestionCardHidden(false);
     if (typeof onDone === "function") onDone();
     return;
   }
+
   el.style.display = "block";
   let count = 3;
   el.textContent = count;
+
   const interval = setInterval(() => {
     count--;
     el.textContent = count > 0 ? count : "GO!";
     if (count < 0) {
       clearInterval(interval);
       el.style.display = "none";
+      window.isCountdownActive = false;
+      if (!window.isGameOver) setQuestionCardHidden(false);
       if (typeof onDone === "function") onDone();
     }
   }, 1000);
 };
 
-// 🔄 BULLETPROOF TAB VISIBILITY RE-SYNC HANDLER FOR PLAYERS
+// BULLETPROOF TAB VISIBILITY RE-SYNC HANDLER FOR PLAYERS
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     console.log("Player tab focused - syncing state with server...");
@@ -371,7 +398,7 @@ document.addEventListener("visibilitychange", () => {
       });
     }
 
-    // 🔑 FORCE RE-KICK ACTIVE ENGINE TIMER LOOP UPON WAKE-UP IF AVAILABLE
+    // FORCE RE-KICK ACTIVE ENGINE TIMER LOOP UPON WAKE-UP IF AVAILABLE
     if (window.Engine && window.Engine.currentQuestion && window.Engine.currentQuestion.endTime) {
       clearInterval(window.questionCountdown);
       window.questionCountdown = setInterval(() => {
@@ -404,13 +431,14 @@ socket.on("disconnect", () => (statusDot.style.backgroundColor = "red"));
 socket.on("game_starting", ({ host }) => {
   console.log(`Game starting by host: ${host}`);
 
-  // 🔑 Hide the waiting-for-host lobby card when game starts
+  // Hide the waiting-for-host lobby card when game starts
   const waitingCard = document.getElementById("waitingForHostCard");
   if (waitingCard) waitingCard.style.display = "none";
 
   window.startPreCountdown(() => {
-    const activeCard = document.getElementById("active-card");
-    if (activeCard && !window.isGameOver) activeCard.style.display = "block";
+    if (!window.isGameOver && !window.isCountdownActive) {
+      setQuestionCardHidden(false);
+    }
   });
 });
 
@@ -426,7 +454,7 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
   }
   if (total !== undefined) window.totalQuestionsCount = total;
 
-  // 🔑 Dynamically fetch question using mode from URL if server didn't pass full question object
+  // Dynamically fetch question using mode from URL if server didn't pass full question object
   let question = serverQuestion;
   if (!question || !question.text) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -444,6 +472,10 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
     total
   };
 
+  if (!window.isCountdownActive) {
+    setQuestionCardHidden(false);
+  }
+
   if (typeof Engine !== "undefined" && typeof Engine.nextQuestion === "function") {
     Engine.nextQuestion(questionData);
   }
@@ -452,9 +484,6 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
   if (tallyEl && current !== undefined && total !== undefined) {
     tallyEl.textContent = `Question ${current} of ${total}`;
   }
-
-  const activeCard = document.getElementById("active-card");
-  if (activeCard && !window.isGameOver) activeCard.style.display = "block";
 });
 
 // Handle server sync responses when reconnecting or refocusing tab
@@ -465,7 +494,7 @@ socket.on("sync_state", (serverState) => {
   }
 });
 
-// 🔑 GAME OVER LISTENER (SAFE NUMERIC PARSING & AUTO LEADERBOARD OPEN)
+// GAME OVER LISTENER (SAFE NUMERIC PARSING & AUTO LEADERBOARD OPEN)
 socket.on("game_over", ({ leaderboard }) => {
   if (window.hasProcessedGameOver) return;
   window.hasProcessedGameOver = true;
@@ -473,8 +502,7 @@ socket.on("game_over", ({ leaderboard }) => {
   window.isGameOver = true;
 
   // Hide active question card immediately
-  const activeCard = document.getElementById("active-card");
-  if (activeCard) activeCard.style.display = "none";
+  setQuestionCardHidden(true);
 
   const playerName = window.currentPlayerName || "Player";
   const refBuyin = window.activeBuyInAmount !== undefined ? window.activeBuyInAmount : 20;
@@ -491,7 +519,7 @@ socket.on("game_over", ({ leaderboard }) => {
       }
     }
 
-    // 🔑 POPULATE & UPDATE LEADERBOARD DATA
+    // POPULATE & UPDATE LEADERBOARD DATA
     if (typeof Leaderboard !== "undefined") {
       sorted.forEach(p => {
         Leaderboard.update(p.name, p.balance);
@@ -510,7 +538,7 @@ socket.on("game_over", ({ leaderboard }) => {
     positionText = "Game Over. You finished in a loss. 📉";
   }
 
-  // 🔑 Safely parse wallet and earnings as numbers before adding
+  // Safely parse wallet and earnings as numbers before adding
   const rawWallet = localStorage.getItem("user_credit");
   let currentWallet = (rawWallet !== null && !isNaN(parseFloat(rawWallet))) ? parseFloat(rawWallet) : 30.00;
   
@@ -534,7 +562,7 @@ socket.on("game_over", ({ leaderboard }) => {
     gameOverModal.style.display = "flex";
   }
 
-  // 🔑 Automatically open leaderboard panel after short delay
+  // Automatically open leaderboard panel after short delay
   setTimeout(() => {
     if (typeof openLeaderboard === "function") {
       openLeaderboard();
@@ -549,19 +577,28 @@ socket.on("pot_update", ({ amount }) => {
 
 window.startPostQuestionCountdown = function (onDone, duration = 5) {
   const el = document.getElementById("postQuestionCountdown");
+  window.isCountdownActive = true;
+  setQuestionCardHidden(true);
+
   if (!el) {
+    window.isCountdownActive = false;
+    if (!window.isGameOver) setQuestionCardHidden(false);
     if (typeof onDone === "function") onDone();
     return;
   }
+
   el.style.display = "block";
   let count = duration;
   el.textContent = count;
+
   const interval = setInterval(() => {
     count--;
     el.textContent = count > 0 ? count : "Next!";
     if (count < 0) {
       clearInterval(interval);
       el.style.display = "none";
+      window.isCountdownActive = false;
+      if (!window.isGameOver) setQuestionCardHidden(false);
       if (typeof onDone === "function") onDone();
     }
   }, 1000);
