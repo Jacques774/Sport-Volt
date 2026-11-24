@@ -43,19 +43,93 @@ const RugbyQuestions = {
 // ============================
 window.isStakeWindowActive = false;
 window.isCountdownActive = false;
+window.isWaitingForNextQuestion = false;
 window.isGameOver = false; // Freeze question flag
+
+let nextQuestionCountdownInterval = null;
 
 function setQuestionCardHidden(hidden) {
   const activeCard = document.getElementById("active-card");
   if (!activeCard) return;
 
-  if (hidden || window.isGameOver) {
+  if (hidden || window.isGameOver || window.isCountdownActive || window.isWaitingForNextQuestion) {
     activeCard.style.setProperty("display", "none", "important");
   } else {
     activeCard.style.removeProperty("display");
     activeCard.style.display = "block";
   }
 }
+
+function getNextQuestionCountdownEl() {
+  return (
+    document.getElementById("postQuestionCountdown") ||
+    document.getElementById("nextQuestionCountdown") ||
+    document.getElementById("stakeCountdown")
+  );
+}
+
+function clearNextQuestionCountdown() {
+  if (nextQuestionCountdownInterval) {
+    clearInterval(nextQuestionCountdownInterval);
+    nextQuestionCountdownInterval = null;
+  }
+  const el = getNextQuestionCountdownEl();
+  if (el) {
+    el.style.display = "none";
+  }
+  window.isWaitingForNextQuestion = false;
+}
+
+window.startNextQuestionCountdown = function (duration = 5, onDone) {
+  clearNextQuestionCountdown();
+
+  if (window.isGameOver) {
+    setQuestionCardHidden(true);
+    return;
+  }
+
+  window.isWaitingForNextQuestion = true;
+  window.isCountdownActive = true;
+  setQuestionCardHidden(true);
+
+  const el = getNextQuestionCountdownEl();
+  let count = Number(duration) > 0 ? Math.floor(Number(duration)) : 5;
+
+  if (el) {
+    el.style.display = "inline-block";
+    el.textContent = `Next question in: ${count}s`;
+  }
+
+  nextQuestionCountdownInterval = setInterval(() => {
+    count--;
+
+    if (window.isGameOver) {
+      clearNextQuestionCountdown();
+      window.isCountdownActive = false;
+      setQuestionCardHidden(true);
+      return;
+    }
+
+    if (count > 0) {
+      if (el) {
+        el.style.display = "inline-block";
+        el.textContent = `Next question in: ${count}s`;
+      }
+    } else if (count === 0) {
+      if (el) {
+        el.style.display = "inline-block";
+        el.textContent = "Next question: 0s";
+      }
+    } else {
+      clearInterval(nextQuestionCountdownInterval);
+      nextQuestionCountdownInterval = null;
+      window.isCountdownActive = false;
+      // Keep card hidden until new_question arrives so the old card never flashes back
+      setQuestionCardHidden(true);
+      if (typeof onDone === "function") onDone();
+    }
+  }, 1000);
+};
 
 function showCountdown(timeLeft) {
   window.isStakeWindowActive = true;
@@ -77,7 +151,6 @@ function revealPot(amount) {
   window.isStakeWindowActive = false;
   window.isCountdownActive = false;
   document.body.classList.remove("stake-active");
-  setQuestionCardHidden(false);
 
   const countdownEl = document.getElementById("stakeCountdown");
   const potEl = document.getElementById("potAmount");
@@ -87,6 +160,10 @@ function revealPot(amount) {
     potEl.style.removeProperty("display");
     potEl.style.display = "inline";
     potEl.textContent = "Pot: " + Number(amount || 0).toFixed(2) + "⚡";
+  }
+
+  if (!window.isGameOver && !window.isWaitingForNextQuestion) {
+    setQuestionCardHidden(false);
   }
 }
 
@@ -363,7 +440,7 @@ window.startPreCountdown = function (onDone) {
 
   if (!el) {
     window.isCountdownActive = false;
-    if (!window.isGameOver) setQuestionCardHidden(false);
+    if (!window.isGameOver && !window.isWaitingForNextQuestion) setQuestionCardHidden(false);
     if (typeof onDone === "function") onDone();
     return;
   }
@@ -379,7 +456,7 @@ window.startPreCountdown = function (onDone) {
       clearInterval(interval);
       el.style.display = "none";
       window.isCountdownActive = false;
-      if (!window.isGameOver) setQuestionCardHidden(false);
+      if (!window.isGameOver && !window.isWaitingForNextQuestion) setQuestionCardHidden(false);
       if (typeof onDone === "function") onDone();
     }
   }, 1000);
@@ -436,7 +513,7 @@ socket.on("game_starting", ({ host }) => {
   if (waitingCard) waitingCard.style.display = "none";
 
   window.startPreCountdown(() => {
-    if (!window.isGameOver && !window.isCountdownActive) {
+    if (!window.isGameOver && !window.isCountdownActive && !window.isWaitingForNextQuestion) {
       setQuestionCardHidden(false);
     }
   });
@@ -453,6 +530,10 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
     lastSeenPlayerIndex = current;
   }
   if (total !== undefined) window.totalQuestionsCount = total;
+
+  // Clear any between-question countdown once the new question arrives
+  clearNextQuestionCountdown();
+  window.isCountdownActive = false;
 
   // Dynamically fetch question using mode from URL if server didn't pass full question object
   let question = serverQuestion;
@@ -472,10 +553,6 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
     total
   };
 
-  if (!window.isCountdownActive) {
-    setQuestionCardHidden(false);
-  }
-
   if (typeof Engine !== "undefined" && typeof Engine.nextQuestion === "function") {
     Engine.nextQuestion(questionData);
   }
@@ -484,6 +561,8 @@ socket.on("new_question", ({ id, timer, current, total, question: serverQuestion
   if (tallyEl && current !== undefined && total !== undefined) {
     tallyEl.textContent = `Question ${current} of ${total}`;
   }
+
+  setQuestionCardHidden(false);
 });
 
 // Handle server sync responses when reconnecting or refocusing tab
@@ -500,6 +579,7 @@ socket.on("game_over", ({ leaderboard }) => {
   window.hasProcessedGameOver = true;
 
   window.isGameOver = true;
+  clearNextQuestionCountdown();
 
   // Hide active question card immediately
   setQuestionCardHidden(true);
@@ -575,30 +655,82 @@ socket.on("pot_update", ({ amount }) => {
   updatePot(amount);
 });
 
+socket.on("round_outcome", ({ outcome, winners, nextQuestionDelay }) => {
+  if (window.isGameOver) {
+    setQuestionCardHidden(true);
+    return;
+  }
+
+  window.isWaitingForNextQuestion = true;
+  setQuestionCardHidden(true);
+
+  if (typeof Engine !== "undefined" && typeof Engine.handleOutcome === "function") {
+    Engine.handleOutcome(outcome, winners);
+  }
+
+  // Re-enforce card hidden in case Engine.handleOutcome re-displays #active-card
+  setQuestionCardHidden(true);
+
+  const player = window.currentPlayerName;
+  const balanceEl = document.getElementById("player-balance");
+  if (balanceEl && window.pot && window.pot.balances[player] !== undefined) {
+    const bal = window.pot.balances[player];
+    balanceEl.textContent = `Balance: ${Number(bal).toFixed(2)}⚡`;
+  }
+
+  const outcomePanel = document.getElementById("outcome-panel");
+  if (outcomePanel) outcomePanel.textContent = `Outcome: ${outcome}`;
+
+  if (typeof window.startPostQuestionCountdown === "function" && document.getElementById("postQuestionCountdown")) {
+    window.startPostQuestionCountdown(undefined, nextQuestionDelay || 5);
+  } else {
+    window.startNextQuestionCountdown(nextQuestionDelay || 5);
+  }
+});
+
 window.startPostQuestionCountdown = function (onDone, duration = 5) {
   const el = document.getElementById("postQuestionCountdown");
+  window.isWaitingForNextQuestion = true;
   window.isCountdownActive = true;
   setQuestionCardHidden(true);
 
   if (!el) {
-    window.isCountdownActive = false;
-    if (!window.isGameOver) setQuestionCardHidden(false);
-    if (typeof onDone === "function") onDone();
+    window.startNextQuestionCountdown(duration, onDone);
     return;
   }
 
-  el.style.display = "block";
-  let count = duration;
-  el.textContent = count;
+  if (nextQuestionCountdownInterval) {
+    clearInterval(nextQuestionCountdownInterval);
+    nextQuestionCountdownInterval = null;
+  }
 
-  const interval = setInterval(() => {
+  el.style.display = "inline-block";
+  let count = Number(duration) > 0 ? Math.floor(Number(duration)) : 5;
+  el.textContent = `Next question in: ${count}s`;
+
+  nextQuestionCountdownInterval = setInterval(() => {
     count--;
-    el.textContent = count > 0 ? count : "Next!";
-    if (count < 0) {
-      clearInterval(interval);
+
+    if (window.isGameOver) {
+      clearNextQuestionCountdown();
+      window.isCountdownActive = false;
+      setQuestionCardHidden(true);
+      return;
+    }
+
+    if (count > 0) {
+      el.style.display = "inline-block";
+      el.textContent = `Next question in: ${count}s`;
+    } else if (count === 0) {
+      el.style.display = "inline-block";
+      el.textContent = "Next question: 0s";
+    } else {
+      clearInterval(nextQuestionCountdownInterval);
+      nextQuestionCountdownInterval = null;
       el.style.display = "none";
       window.isCountdownActive = false;
-      if (!window.isGameOver) setQuestionCardHidden(false);
+      // Keep card hidden until new_question arrives so the old card never flashes back
+      setQuestionCardHidden(true);
       if (typeof onDone === "function") onDone();
     }
   }, 1000);
